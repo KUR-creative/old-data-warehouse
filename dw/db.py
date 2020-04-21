@@ -19,3 +19,6 @@ def init(user, pw, host, port, dbname):
         print(r.as_dict())
     print(rows.all())
     '''
+
+def insert(user, pw, host, port, dbname):
+    print(user, pw, host, port, dbname)
