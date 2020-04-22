@@ -19,6 +19,27 @@ root
     ├── ...
     └── YumeNoKayoiji.xml
 '''
+from pathlib import Path
+from dw.utils import file_utils as fu
+from dw.utils import fp
 
 def is_valid(root):
-    return True
+    rdir = Path(root)
+    idir = Path(root, 'images')
+    adir = Path(root, 'manga109-annotations')
+    if((not rdir.exists()) and
+       (not idir.exists()) and
+       (not adir.exists())):
+        print('Manga109 dset dir structure is invalid')
+        return False
+    
+    file_name = lambda p: Path(p).stem
+    titles = fp.lmap(file_name, fu.human_sorted(fu.children(idir)))
+    xml_names = fp.lmap(file_name, fu.human_sorted(fu.children(adir)))
+    
+    eq_len = (len(titles) == len(xml_names)) 
+    eq_names = bool(sum(
+        map(fp.equal, titles, xml_names)
+    ))
+    
+    return eq_len and eq_names
