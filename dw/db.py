@@ -24,3 +24,7 @@ def run(query, user, pw, host, port, dbname):
     with pg.connect(user=user, password=pw, host=host, port=port, dbname=dbname) as conn:
         with conn.cursor() as cursor:
             return cursor.execute(query)
+
+def multi_query(*queries):
+    ''' Queries is list<pypika.queries.QueryBuilder> '''
+    return ';'.join(map(str, queries))

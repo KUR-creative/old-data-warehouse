@@ -89,17 +89,14 @@ def save(root, connection):
     )
     
     # Run queries.
-    raws_q = Table('manga109_raw').insert(
-        *zip(multiplied_titles, nos, imgpaths)
-    ).get_sql()
-    xmls_q = Table('manga109_xml').insert(
-        *zip(titles, xmls)
-    ).get_sql()
-    meta_q = Table('metadata').insert(
-        'manga109_raw', root
-    ).get_sql()
-
-    query = ';'.join([raws_q, xmls_q, meta_q])
+    query = db.multi_query(
+        Table('manga109_raw').insert(
+            *zip(multiplied_titles, nos, imgpaths)),
+        Table('manga109_xml').insert(
+            *zip(titles, xmls)),
+        Table('metadata').insert(
+            'manga109_raw', root)
+    )
     db.run(query, *connection)
     
     # None means success.
