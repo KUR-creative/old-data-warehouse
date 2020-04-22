@@ -49,10 +49,8 @@ class add(object):
         from dw import db
         from dw.data_source import manga109
 
-        return manga109.save(root, connection)
-        '''
-        #print('valid?', manga109.is_valid(root))
         parsed = parse('{}:{}@{}:{}/{}', connection)
-        return(db.insert(*parsed) if parsed
-          else f'invalid connection string:\n{connection}')
-        '''
+        result = manga109.save(root, parsed) if parsed else 'conn_parse_error'
+        return('Add success' if result == None
+          else f'invalid connection string:\n{connection}' if parsed == None 
+          else result) # some db error

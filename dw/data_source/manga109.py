@@ -23,9 +23,12 @@ import os
 from pathlib import Path
 
 import funcy as F
+from pypika import Table
 
 from dw.utils import file_utils as fu
 from dw.utils import fp
+from dw import db
+
 
 def file_name(path):
     return Path(path).stem
@@ -76,22 +79,18 @@ def save(root, connection):
         fp.map(fp.tup(lambda title, no: [title, int(no)])),
         fp.unzip
     )
-    print(nos)
-    print(titles)
 
+    # get metadata xml files
     xmls = fp.go(
         Path(root, 'manga109-annotations'),
         sorted_children,
         #fp.lmap(lambda p: Path(p).read_text())
         fp.map(lambda p: Path(p).read_text())
     )
-    #print(imgpaths, len(imgpaths))
-    #print(xmls[0])
-    '''
-    print(fp.lmap(
-        rel,
-        fu.children(Path(root,'images', dirs[0]))))
-    print()
-    #print(os.listdir(Path(root,'manga109-annotations')))
-    print(connection)
-    '''
+    
+    return db.run(
+        Table('manga109_raw').insert(
+            *zip(titles, nos, imgpaths)
+        ).get_sql(),
+        *connection
+    )

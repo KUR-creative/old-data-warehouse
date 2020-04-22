@@ -20,5 +20,7 @@ def init(user, pw, host, port, dbname):
     print(rows.all())
     '''
 
-def insert(user, pw, host, port, dbname):
-    print(user, pw, host, port, dbname)
+def run(query, user, pw, host, port, dbname):
+    with pg.connect(user=user, password=pw, host=host, port=port, dbname=dbname) as conn:
+        with conn.cursor() as cursor:
+            return cursor.execute(query)
