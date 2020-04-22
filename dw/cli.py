@@ -49,8 +49,10 @@ class add(object):
         from dw import db
         from dw.data_source import manga109
 
-        print('valid?', manga109.is_valid(root))
-
+        return manga109.save(root, connection)
+        '''
+        #print('valid?', manga109.is_valid(root))
         parsed = parse('{}:{}@{}:{}/{}', connection)
         return(db.insert(*parsed) if parsed
           else f'invalid connection string:\n{connection}')
+        '''
