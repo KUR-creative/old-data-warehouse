@@ -7,10 +7,12 @@ CREATE TABLE IF NOT EXISTS manga109_raw (
 
 CREATE TABLE IF NOT EXISTS manga109_xml (
     title TEXT NOT NULL,
-    xml XML NOT NULL
+    xml XML NOT NULL,
+    PRIMARY KEY (title)
 );
 
 CREATE TABLE IF NOT EXISTS metadata (
     tablename TEXT NOT NULL,
-    root TEXT NOT NULL
+    root TEXT NOT NULL,
+    PRIMARY KEY (tablename)
 );
