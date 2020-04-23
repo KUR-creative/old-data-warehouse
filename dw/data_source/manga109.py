@@ -81,10 +81,9 @@ def save(root, connection):
 
     # Get metadata xml files
     titles = fp.lmap(stem, title_dirpaths)
-    xmls = fp.go(
+    xmlseq = fp.go(
         Path(root, 'manga109-annotations'),
         sorted_children,
-        #fp.lmap(lambda p: Path(p).read_text())
         fp.map(lambda p: Path(p).read_text())
     )
     
