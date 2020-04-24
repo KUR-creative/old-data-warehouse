@@ -88,13 +88,14 @@ def save(root, connection):
     )
     
     # Run queries.
+    tab_name = 'manga109_raw'
     query = db.multi_query(
-        Table('manga109_raw').insert(
+        Table(tab_name).insert(
             *zip(multiplied_titles, nos, imgpaths)),
         Table('manga109_xml').insert(
             *zip(titles, xmlseq)),
         Table('raw_table_root').insert(
-            'manga109_raw', root)
+            tab_name, root)
     )
     db.run(query, *connection)
     
