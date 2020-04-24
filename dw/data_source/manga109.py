@@ -92,8 +92,8 @@ def save(root, connection):
         Table('manga109_raw').insert(
             *zip(multiplied_titles, nos, imgpaths)),
         Table('manga109_xml').insert(
-            *zip(titles, xmls)),
-        Table('metadata').insert(
+            *zip(titles, xmlseq)),
+        Table('raw_table_root').insert(
             'manga109_raw', root)
     )
     db.run(query, *connection)
