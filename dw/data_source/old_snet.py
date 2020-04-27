@@ -8,9 +8,10 @@ root direcory must be satisfy following structure.
 import os
 from pathlib import Path
 import json
+import uuid
 
 import funcy as F
-from pypika import Table
+from pypika import Table, Query
 
 from dw.utils import file_utils as fu
 from dw.utils import fp, etc
@@ -68,31 +69,59 @@ def save(root, connection):
     wk_dir = Path(root, 'clean_wk')
     map_json = Path(root, 'map.json')
     
-    # Get {img,rbk,wk} paths
+    # Get {img,rbk,wk} paths.
     relpath = F.partial(os.path.relpath, start=root)
     sorted_children = fp.pipe(fu.children, fu.human_sorted)
     
-    img_paths = fp.lmap(relpath, sorted_children(img_dir))
-    rbk_paths = fp.lmap(relpath, sorted_children(rbk_dir))
-    wk_paths = fp.lmap(relpath, sorted_children(wk_dir))
-
-    # Get img names. NOTE: map_json must be sorted in id
-    names, ids = fp.go(
-        map_json.read_text(),
-        json.loads,
-        fp.map(fp.lmap(lambda p: Path(p).stem)),
-        fp.unzip
-    )
+    img_abspaths = sorted_children(img_dir)
+    rbk_abspaths = sorted_children(rbk_dir)
+    wk_abspaths = sorted_children(wk_dir)
+    img_relpaths = fp.lmap(relpath, img_abspaths)
+    rbk_relpaths = fp.lmap(relpath, rbk_abspaths)
+    wk_relpaths = fp.lmap(relpath, wk_abspaths)
+    
+    # Generate uuids.
+    def uuids(length):
+        return list(F.repeatedly(
+            lambda: str(uuid.uuid4()), length))
+    img_uuids = uuids(len(img_abspaths))
+    mask_uuids = uuids(len(rbk_abspaths) + len(wk_abspaths))
+    all_uuids = img_uuids + mask_uuids 
+    
+    abspaths = fp.lmapcat(
+        sorted_children, [img_dir, rbk_dir, wk_dir])
+    relpaths = fp.lmap(relpath, abspaths)
     
     # Run queries.
     # Add file_source
+    data_src = 'old_snet'
     query = db.multi_query(
         Table('file_source').insert(
-            'old_snet', str(root_dir), etc.host_ip())
+            data_src, str(root_dir), etc.host_ip()),
+        Query.into('file')
+            .columns('uuid', 'source', 'relpath', 'abspath')
+            .insert(*zip(
+                all_uuids, F.repeat(data_src),
+                abspaths, relpaths
+            )),
+        Table('image').insert(
+            *fp.map(lambda x: (x,), img_uuids)),
     )
-
+    print(query)
     db.run(query, *connection)
+
     '''
+        Table('mask_scheme').insert(
+            (rbk, 
+    
+    print(insert_files)
+    result = db.get(
+        Table('file').select('*'), *connection)
+    for r in result:
+        print(r)
+    #print(img_abspaths)
+    
+    
     tab_name = 'old_snet_data_raw'
     query = db.multi_query(
         Table(tab_name).insert(
@@ -101,6 +130,16 @@ def save(root, connection):
             tab_name, root)
     )
     
+    '''
+    
+    # Get img names. NOTE: map_json must be sorted in id
+    '''
+    names, ids = fp.go(
+        map_json.read_text(),
+        json.loads,
+        fp.map(fp.lmap(lambda p: Path(p).stem)),
+        fp.unzip
+    )
     '''
     
     # None means success.

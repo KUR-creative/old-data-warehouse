@@ -13,7 +13,8 @@ CREATE TABLE IF NOT EXISTS file (
     type    TEXT,
     md5     BYTEA,
     size    INTEGER,
-    PRIMARY KEY(uuid)
+    PRIMARY KEY(uuid),
+    UNIQUE (source, relpath, abspath)
 );
 
 ----------------------------------------------------------------
