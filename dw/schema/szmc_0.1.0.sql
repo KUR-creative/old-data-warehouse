@@ -35,8 +35,14 @@ CREATE TABLE IF NOT EXISTS mask_scheme_content (
 );
 
 CREATE TABLE IF NOT EXISTS mask (
-    uuid    UUID    REFERENCES file(uuid),
+    uuid    UUID    NOT NULL UNIQUE     REFERENCES file(uuid),
     scheme  TEXT    REFERENCES mask_scheme(name)
+);
+
+----------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS snet_annotation (
+    input   UUID    REFERENCES image(uuid),
+    output  UUID    REFERENCES mask(uuid)
 );
 
 ----------------------------------------------------------------
