@@ -12,6 +12,7 @@ import uuid
 
 import funcy as F
 from pypika import Table, Query
+#from pypika import functions as fn
 
 from dw.utils import file_utils as fu
 from dw.utils import fp, etc
@@ -64,18 +65,15 @@ def save(root, connection):
     print(is_valid(root))
 
     root_dir = Path(root)
-    img_dir = Path(root, 'image')
-    rbk_dir = Path(root, 'clean_rbk')
-    wk_dir = Path(root, 'clean_wk')
-    map_json = Path(root, 'map.json')
+    #map_json = Path(root, 'map.json')
     
     # Get {img,rbk,wk} paths.
     relpath = F.partial(os.path.relpath, start=root)
     sorted_children = fp.pipe(fu.children, fu.human_sorted)
     
-    img_abspaths = sorted_children(img_dir)
-    rbk_abspaths = sorted_children(rbk_dir)
-    wk_abspaths = sorted_children(wk_dir)
+    img_abspaths = sorted_children(Path(root, 'image'))
+    rbk_abspaths = sorted_children(Path(root, 'clean_rbk'))
+    wk_abspaths = sorted_children(Path(root, 'clean_wk'))
     img_relpaths = fp.lmap(relpath, img_abspaths)
     rbk_relpaths = fp.lmap(relpath, rbk_abspaths)
     wk_relpaths = fp.lmap(relpath, wk_abspaths)
@@ -93,7 +91,6 @@ def save(root, connection):
     relpaths = fp.lmap(relpath, abspaths)
     
     # Run queries.
-    # Add file_source
     old_snet, rbk, wk = 'old_snet', 'rbk', 'wk'
     query = db.multi_query(
         Table('file_source').insert(
@@ -120,36 +117,12 @@ def save(root, connection):
             zip(wk_uuids, F.repeat(wk))
         ))
     )
-    print(query)
     db.run(query, *connection)
 
-    '''
-    print(insert_files)
-    result = db.get(
-        Table('file').select('*'), *connection)
-    for r in result:
-        print(r)
-    #print(img_abspaths)
-    
-    
-    tab_name = 'old_snet_data_raw'
-    query = db.multi_query(
-        Table(tab_name).insert(
-            *zip(ids, names, img_paths, rbk_paths, wk_paths)),
-        Table('raw_table_root').insert(
-            tab_name, root)
-    )
-    
-    '''
-    
-    # Get img names. NOTE: map_json must be sorted in id
-    '''
-    names, ids = fp.go(
-        map_json.read_text(),
-        json.loads,
-        fp.map(fp.lmap(lambda p: Path(p).stem)),
-        fp.unzip
-    )
-    '''
+    #TODO: Validation(Fact check).
+    # count(image) + count(mask) = count(file)
+    # count(rbk) = count(wk)
+    # rbk mask scheme then path has 'rbk'
+    # wk mask scheme then path has 'wk'
     
     # None means success.
