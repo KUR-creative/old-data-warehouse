@@ -85,35 +85,45 @@ def save(root, connection):
         return list(F.repeatedly(
             lambda: str(uuid.uuid4()), length))
     img_uuids = uuids(len(img_abspaths))
-    mask_uuids = uuids(len(rbk_abspaths) + len(wk_abspaths))
-    all_uuids = img_uuids + mask_uuids 
+    rbk_uuids = uuids(len(rbk_abspaths))
+    wk_uuids = uuids(len(wk_abspaths))
     
-    abspaths = fp.lmapcat(
-        sorted_children, [img_dir, rbk_dir, wk_dir])
+    all_uuids = img_uuids + rbk_uuids + wk_uuids
+    abspaths = img_abspaths + rbk_abspaths + wk_abspaths
     relpaths = fp.lmap(relpath, abspaths)
     
     # Run queries.
     # Add file_source
-    data_src = 'old_snet'
+    old_snet, rbk, wk = 'old_snet', 'rbk', 'wk'
     query = db.multi_query(
         Table('file_source').insert(
-            data_src, str(root_dir), etc.host_ip()),
+            old_snet, str(root_dir), etc.host_ip()),
         Query.into('file')
             .columns('uuid', 'source', 'relpath', 'abspath')
             .insert(*zip(
-                all_uuids, F.repeat(data_src),
+                all_uuids, F.repeat(old_snet),
                 abspaths, relpaths
             )),
         Table('image').insert(
             *fp.map(lambda x: (x,), img_uuids)),
+        Table('mask_scheme').insert(
+            (rbk, 'red, blue, black 3 class dataset'),
+            ( wk, 'white, black 2 class dataset')),
+        Table('mask_scheme_content').insert(
+            (rbk, '#FF0000', 'easy text'), 
+            (rbk, '#0000FF', 'hard text'), 
+            (rbk, '#000000', 'background'),
+            ( wk, '#FFFFFF', 'text'), 
+            ( wk, '#000000', 'background')), 
+        Table('mask').insert(*F.concat(
+            zip(rbk_uuids, F.repeat(rbk)),
+            zip(wk_uuids, F.repeat(wk))
+        ))
     )
     print(query)
     db.run(query, *connection)
 
     '''
-        Table('mask_scheme').insert(
-            (rbk, 
-    
     print(insert_files)
     result = db.get(
         Table('file').select('*'), *connection)
