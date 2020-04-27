@@ -2,11 +2,10 @@ import psycopg2 as pg
 import records
 from pypika import Query
 
-db = None
-def init(user, pw, host, port, dbname):
+def init(schema, user, pw, host, port, dbname):
     with pg.connect(user=user, password=pw, host=host, dbname=dbname) as conn:
         with conn.cursor() as cursor:
-            cursor.execute(open('./dw/schema/raw_data.sql', 'r').read())
+            cursor.execute(schema)
     return 'Init success'
     '''
     conn_str = f'postgresql+psycopg2://{connection}'

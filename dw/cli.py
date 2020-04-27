@@ -4,16 +4,19 @@
 
 class init(object):
     ''' Initialize something. These commands need to be called only once. '''
-    def test_db(self, connection):
+    def szmc_db(self, connection, schema='./dw/schema/szmc_0.1.0.sql'):
         ''' For test
-        args: connection: string 'id:pw@host:port/dbname' format
+        args: 
+        schema: schema sql file path. default: './dw/schema/szmc_0.1.0.sql'
+        connection: string 'id:pw@host:port/dbname' format
         '''
         from parse import parse
         from dw import db
         
         parsed = parse('{}:{}@{}:{}/{}', connection)
-        return(db.init(*parsed) if parsed
-          else f'invalid connection string:\n{connection}')
+        with open(schema, 'r') as s:
+            return(db.init(s.read(), *parsed) if parsed
+              else f'invalid connection string:\n{connection}')
 
 class add(object):
     ''' Add something(s) '''
