@@ -1,5 +1,5 @@
 CREATE TABLE IF NOT EXISTS file_source (
-    name        TEXT    NOT NULL UNIQUE, 
+    name        TEXT    PRIMARY KEY,
     root_path   TEXT    NOT NULL,
     host        TEXT    NOT NULL
 );
@@ -19,12 +19,12 @@ CREATE TABLE IF NOT EXISTS file (
 
 ----------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS image (
-    uuid    UUID    REFERENCES file(uuid)
+    uuid    UUID    NOT NULL UNIQUE     REFERENCES file(uuid)
 );
 
 ----------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS mask_scheme (
-    name           TEXT   NOT NULL UNIQUE,
+    name           TEXT   PRIMARY KEY,
     description    TEXT   NOT NULL
 );
 
