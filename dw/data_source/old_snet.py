@@ -13,7 +13,7 @@ import funcy as F
 from pypika import Table
 
 from dw.utils import file_utils as fu
-from dw.utils import fp
+from dw.utils import fp, etc
 from dw import db
 
 
@@ -51,7 +51,7 @@ def is_valid(root):
         map(fp.equal, img_stems, rbk_stems, wk_stems, ids)
     ))
     if not eq_stems:
-        print('Some xml names are mismatched')
+        print('Some file names are mismatched')
         return False
     
     return True
@@ -85,6 +85,14 @@ def save(root, connection):
     )
     
     # Run queries.
+    # Add file_source
+    query = db.multi_query(
+        Table('file_source').insert(
+            'old_snet', str(root_dir), etc.host_ip())
+    )
+
+    db.run(query, *connection)
+    '''
     tab_name = 'old_snet_data_raw'
     query = db.multi_query(
         Table(tab_name).insert(
@@ -93,6 +101,6 @@ def save(root, connection):
             tab_name, root)
     )
     
-    db.run(query, *connection)
+    '''
     
     # None means success.

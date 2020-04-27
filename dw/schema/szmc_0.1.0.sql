@@ -1,12 +1,18 @@
-CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+CREATE TABLE IF NOT EXISTS file_source (
+    name        TEXT    NOT NULL UNIQUE, 
+    root_path   TEXT    NOT NULL,
+    host        TEXT    NOT NULL
+);
 
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 CREATE TABLE IF NOT EXISTS file (
-    uuid   UUID     DEFAULT uuid_generate_v4 (),
-    path   TEXT     NOT NULL,
-    source TEXT     NOT NULL,
-    type   TEXT,
-    md5    BYTEA,
-    size   INTEGER,
+    uuid    UUID     DEFAULT uuid_generate_v4 (),
+    source  TEXT     REFERENCES file_source(name),
+    relpath TEXT     NOT NULL, 
+    abspath TEXT     NOT NULL, -- source.root/relpath
+    type    TEXT,
+    md5     BYTEA,
+    size    INTEGER,
     PRIMARY KEY(uuid)
 );
 
