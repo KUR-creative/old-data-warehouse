@@ -5,7 +5,7 @@
 class init(object):
     ''' Initialize something. These commands need to be called only once. '''
     def szmc_db(self, connection, schema='./dw/schema/szmc_0.1.0.sql'):
-        ''' For test
+        '''
         args: 
         schema: schema sql file path. default: './dw/schema/szmc_0.1.0.sql'
         connection: string 'id:pw@host:port/dbname' format
@@ -22,9 +22,9 @@ class add(object):
     ''' Add something(s) '''
     def old_snet(self, root, connection):
         '''
-        Add old snet dataset into db.
+        Add old snet data(not dataset!) into db.
 
-        Old snet dataset is directory of files.
+        Old snet data is directory of files.
         ROOT direcory must satisfy following structure.
         map.json must be list of [old_name, some_path]
         
@@ -55,5 +55,28 @@ class add(object):
         return('Add success' if result == None
           else f'invalid connection string:\n{connection}' if parsed == None 
           else result) # some db error
-        print(root, connection)
 
+class create(object):
+    ''' Create something(s) '''
+    def old_snet(self, split_yaml, connection):
+        '''
+        Create old snet dataset from old snet data in db(connection)
+
+        Old snet dataset is consist of <image,mask> pairs that splitted in train/valid/test.
+        split_yaml must be dict of id list
+        ex) {train: [0,1, ...], valid: [2,3, ..], test: [6,7, ..]} 
+        id is name of image/mask files in old snet (old snet specific data).
+        
+        args: 
+            split_yaml: file path of train/valid/split specified yaml (legacy)
+            connection: string 'id:pw@host:port/dbname' format.
+        '''
+        from parse import parse
+        from dw.data_source import old_snet
+
+        parsed = parse('{}:{}@{}:{}/{}', connection)
+        result = old_snet.create(connection, split_yaml) if parsed else 'conn_parse_error'
+        return('Create success' if result == None
+          else f'invalid connection string:\n{connection}' if parsed == None 
+          else result) # some db error
+        print(root, connection)

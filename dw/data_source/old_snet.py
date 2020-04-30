@@ -18,8 +18,7 @@ from dw.utils import file_utils as fu
 from dw.utils import fp, etc
 from dw import db
 
-
-def is_valid(root):
+def is_valid_directory(root):
     root_dir = Path(root)
     img_dir = Path(root, 'image')
     rbk_dir = Path(root, 'clean_rbk')
@@ -60,9 +59,8 @@ def is_valid(root):
 
 def save(root, connection):
     ''' Save old snet dataset(root) to DB(connection) '''
-    if not is_valid(root):
+    if not is_valid_directory(root):
         return 'Invalid old snet dataset'
-    print(is_valid(root))
 
     root_dir = Path(root)
     #map_json = Path(root, 'map.json')
@@ -126,3 +124,12 @@ def save(root, connection):
     # wk mask scheme then path has 'wk'
     
     # None means success.
+
+def is_valid_yaml(split_yaml_path):
+    return True
+
+def create(split_yaml, connection):
+    ''' Create old snet dataset from old snet data in db(connection) '''
+    if not is_valid_yaml(split_yaml):
+        return 'Invalid split yaml'
+    print('ppap')
