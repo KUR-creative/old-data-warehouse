@@ -78,7 +78,7 @@ class create(object):
         from dw.data_source import old_snet
 
         parsed = parse('{}:{}@{}:{}/{}', connection)
-        result = old_snet.create(split_yaml, connection) if parsed else 'conn_parse_error'
+        result = old_snet.create(split_yaml, parsed) if parsed else 'conn_parse_error'
         return('Create success' if result == None
           else f'invalid connection string:\n{connection}' if parsed == None 
           else result) # some db error
