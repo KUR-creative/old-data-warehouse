@@ -12,6 +12,7 @@ import uuid
 
 import funcy as F
 from pypika import Table, Query
+import yaml
 #from pypika import functions as fn
 
 from dw.utils import file_utils as fu
@@ -139,5 +140,75 @@ def create(split_yaml, connection):
     ''' Create old snet dataset from old snet data in db(connection) '''
     if not is_valid_yaml(split_yaml):
         return 'Invalid split yaml'
-    print(split_yaml)
-    print(connection)
+
+    with open(split_yaml) as f:
+        ids = yaml.safe_load(f.read())
+        
+    # Get data from DB
+    snet_annotation = Table('snet_annotation')
+    file, mask = Table('file'), Table('mask')
+    rbk_rows, wk_rows = F.lsplit(
+        lambda row: row['scheme'] == 'rbk',
+        db.get(
+            Query.from_(snet_annotation)
+                 .from_(mask).from_(file)
+                 .select(snet_annotation.input,
+                         snet_annotation.output,
+                         file.relpath,
+                         mask.scheme)
+                 .where(snet_annotation.output == mask.uuid)
+                 .where(mask.uuid == file.uuid),
+            *connection
+        )
+    )
+    
+    # Group rows by rbk/wk, train/valid/test
+    train, valid, test = 'train', 'valid', 'test'
+    num_train = len(ids[train])
+    num_valid = len(ids[valid])
+    num_test  = len(ids[test])
+    
+    def where(row):
+        id = int(Path(row['relpath']).stem)
+        return(train if id in ids[train]
+          else valid if id in ids[valid] else test)
+    rbk = F.group_by(where, rbk_rows)
+    wk = F.group_by(where, wk_rows)
+
+    assert len(rbk[train]) == len(wk[train]) == num_train
+    assert len(rbk[valid]) == len(wk[valid]) == num_valid
+    assert len(rbk[test])  == len(wk[test])  == num_test
+    
+    # Build rows of dataset_annotation relation.
+    dset_info = [
+        'old_snet', 'a', num_train, num_valid, num_test]
+    def dset_anno_rows(dset_info, row_dict, usage):
+        return F.map(
+            lambda row: (
+                *dset_info,
+                str(row['input']),
+                str(row['output']),
+                usage
+            ),
+            row_dict[usage]
+        )
+
+    # Build query.
+    query = db.multi_query(
+        Table('dataset').insert(
+            *dset_info,
+            'Old snet dataset. tvt split version:a'
+        ),
+        Table('dataset_annotation').insert(*F.concat(
+            dset_anno_rows(dset_info, rbk, train),
+            dset_anno_rows(dset_info, rbk, valid),
+            dset_anno_rows(dset_info, rbk, test),
+            dset_anno_rows(dset_info, wk, train),
+            dset_anno_rows(dset_info, wk, valid),
+            dset_anno_rows(dset_info, wk, test)
+        ))
+    )
+
+    db.run(query, *connection)
+
+    # None means success.
