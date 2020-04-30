@@ -6,6 +6,8 @@ class init(object):
     ''' Initialize something. These commands need to be called only once. '''
     def szmc_db(self, connection, schema='./dw/schema/szmc_0.1.0.sql'):
         '''
+        Initialize szmc DB
+
         args: 
         schema: schema sql file path. default: './dw/schema/szmc_0.1.0.sql'
         connection: string 'id:pw@host:port/dbname' format
@@ -65,10 +67,13 @@ class create(object):
         Old snet dataset is consist of <image,mask> pairs that splitted in train/valid/test.
         split_yaml must be dict of id list
         ex) {train: [0,1, ...], valid: [2,3, ..], test: [6,7, ..]} 
-        id is name of image/mask files in old snet (old snet specific data).
+        id is name of image/mask files in old snet (id is old snet specific data).
         
-        dataset old_snet.a.199.58.28 will be created.
+        Dataset old_snet.a.199.58.28 will be created.
                 (name.split.train.valid.test)
+        the dataset is row of 'dataset' table. 
+        And the contents of dataset is implicitly saved 
+        in 'dataset_annotation' table.
         
         args: 
             split_yaml: file path of train/valid/split specified yaml (legacy)
