@@ -2,6 +2,17 @@
 # This module is fire cli spec, therefore
 # you must import modules inside of (command) function!
 
+def DROP_ALL(connection):
+    print('This command DROP ALL of tables in DB.')
+    ans = input('Do you really want? [yes/no] \n')
+    if ans == 'yes':
+        return 'All tables are dropped'
+    elif ans == 'no':
+        return 'Nothing happened!'
+    else:
+        return 'Please answer: yes or no.'
+        
+    
 class init(object):
     ''' Initialize something. These commands need to be called only once. '''
     def szmc_db(self, connection, schema='./dw/schema/szmc_0.1.0.sql'):
@@ -46,8 +57,8 @@ class add(object):
         └── map.json
         
         args: 
-            root: root directory path string of old snet dataset. (src)
-            connection: string 'id:pw@host:port/dbname' format. (dst)
+        root: root directory path string of old snet dataset. (src)
+        connection: string 'id:pw@host:port/dbname' format. (dst)
         '''
         from parse import parse
         from dw.data_source import old_snet
@@ -76,11 +87,13 @@ class create(object):
         in 'dataset_annotation' table.
         
         args: 
-            split_yaml: file path of train/valid/split specified yaml (legacy)
-            connection: string 'id:pw@host:port/dbname' format.
+        split_yaml: file path of train/valid/split specified yaml (legacy)
+        connection: string 'id:pw@host:port/dbname' format.
         '''
         from parse import parse
         from dw.data_source import old_snet
+        import sys
+        print(sys.argv)
 
         parsed = parse('{}:{}@{}:{}/{}', connection)
         result = old_snet.create(split_yaml, parsed) if parsed else 'conn_parse_error'
