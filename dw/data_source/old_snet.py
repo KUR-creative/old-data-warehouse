@@ -99,8 +99,10 @@ def save(root, connection):
                 all_uuids, F.repeat(old_snet),
                 abspaths, relpaths
             )),
+        # Add images
         Table('image').insert(
             *fp.map(lambda x: (x,), img_uuids)),
+        # Add masks
         Table('mask_scheme').insert(
             (rbk, 'red, blue, black 3 class dataset'),
             ( wk, 'white, black 2 class dataset')),
@@ -113,6 +115,11 @@ def save(root, connection):
         Table('mask').insert(*F.concat(
             zip(rbk_uuids, F.repeat(rbk)),
             zip(wk_uuids, F.repeat(wk))
+        )),
+        # Add annotation relation
+        Table('snet_annotation').insert(*F.concat(
+            zip(img_uuids, rbk_uuids),
+            zip(img_uuids, wk_uuids)
         ))
     )
     db.run(query, *connection)
