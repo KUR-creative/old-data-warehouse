@@ -45,6 +45,33 @@ CREATE TABLE IF NOT EXISTS snet_annotation (
     output  UUID    REFERENCES mask(uuid)
 );
 
+CREATE TABLE IF NOT EXISTS dataset (
+    name           TEXT,
+    split          TEXT,
+    train          INTEGER,
+    valid          INTEGER,
+    test           INTEGER,
+    description    TEXT,
+    PRIMARY KEY(name, split, train, valid, test)
+);
+
+CREATE TYPE Usage AS ENUM ('train', 'valid', 'test');
+CREATE TABLE IF NOT EXISTS dataset_annotation (
+    name           TEXT,
+    split          TEXT,
+    train          INTEGER,
+    valid          INTEGER,
+    test           INTEGER,
+    input          UUID,
+    output         UUID,
+    usage          Usage,
+    UNIQUE (name, split, train, valid, test, input, output),
+    FOREIGN KEY (name, split, train, valid, test)
+    REFERENCES dataset(name, split, train, valid, test)
+);
+COMMENT ON TABLE dataset_annotation
+IS 'Relation of dataset and annotation';
+
 ----------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS image_metadata (
     uuid   UUID     REFERENCES file(uuid),
