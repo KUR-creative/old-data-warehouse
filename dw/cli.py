@@ -3,15 +3,44 @@
 # you must import modules inside of (command) function!
 
 def DROP_ALL(connection):
+    ''' 
+    DROP ALL of tables in DB. Be careful!
+    
+    args: 
+    connection: string 'id:pw@host:port/dbname' format
+    '''
+    from parse import parse
+    from dw import db
+    
     print('This command DROP ALL of tables in DB.')
     ans = input('Do you really want? [yes/no] \n')
     if ans == 'yes':
-        return 'All tables are dropped'
+        parsed = parse('{}:{}@{}:{}/{}', connection)
+        query = 'DROP SCHEMA public CASCADE; CREATE SCHEMA public;'
+        if parsed:
+            db.run(query, *parsed)
+            return 'All tables are dropped'
+        else:
+            return f'invalid connection string:\n{connection}'
     elif ans == 'no':
         return 'Nothing happened!'
     else:
         return 'Please answer: yes or no.'
         
+def REINIT(connection, schema='./dw/schema/szmc_0.1.0.sql'): 
+    ''' 
+    DROP ALL of tables in DB and then re-initialize DB. 
+    Be careful!
+    
+    args: 
+    schema: schema sql file path. default: './dw/schema/szmc_0.1.0.sql'
+    connection: string 'id:pw@host:port/dbname' format
+    '''
+    ret = DROP_ALL(connection)
+    if ret == 'All tables are dropped':
+        return init().szmc_db(connection, schema)
+    else:
+        return ret
     
 class init(object):
     ''' Initialize something. These commands need to be called only once. '''
