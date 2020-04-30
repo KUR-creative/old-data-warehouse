@@ -139,4 +139,5 @@ def create(split_yaml, connection):
     ''' Create old snet dataset from old snet data in db(connection) '''
     if not is_valid_yaml(split_yaml):
         return 'Invalid split yaml'
-    print('ppap')
+    print(split_yaml)
+    print(connection)

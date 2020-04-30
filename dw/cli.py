@@ -20,7 +20,7 @@ class init(object):
 
 class add(object):
     ''' Add something(s) '''
-    def old_snet(self, root, connection):
+    def old_snet(self, connection, root):
         '''
         Add old snet data(not dataset!) into db.
 
@@ -58,7 +58,7 @@ class add(object):
 
 class create(object):
     ''' Create something(s) '''
-    def old_snet(self, split_yaml, connection):
+    def old_snet(self, connection, split_yaml):
         '''
         Create old snet dataset from old snet data in db(connection)
 
