@@ -20,7 +20,7 @@ class init(object):
 
 class add(object):
     ''' Add something(s) '''
-    def old_snet(self, connection, root):
+    def old_snet(self, root, connection):
         '''
         Add old snet data(not dataset!) into db.
 
@@ -58,7 +58,7 @@ class add(object):
 
 class create(object):
     ''' Create something(s) '''
-    def old_snet(self, connection, split_yaml):
+    def old_snet(self, split_yaml, connection):
         '''
         Create old snet dataset from old snet data in db(connection)
 
@@ -66,6 +66,9 @@ class create(object):
         split_yaml must be dict of id list
         ex) {train: [0,1, ...], valid: [2,3, ..], test: [6,7, ..]} 
         id is name of image/mask files in old snet (old snet specific data).
+        
+        dataset old_snet.a.199.58.28 will be created.
+                (name.split.train.valid.test)
         
         args: 
             split_yaml: file path of train/valid/split specified yaml (legacy)
@@ -75,7 +78,7 @@ class create(object):
         from dw.data_source import old_snet
 
         parsed = parse('{}:{}@{}:{}/{}', connection)
-        result = old_snet.create(connection, split_yaml) if parsed else 'conn_parse_error'
+        result = old_snet.create(split_yaml, connection) if parsed else 'conn_parse_error'
         return('Create success' if result == None
           else f'invalid connection string:\n{connection}' if parsed == None 
           else result) # some db error
