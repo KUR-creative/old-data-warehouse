@@ -1,0 +1,30 @@
+ [데이터셋 버전]
+name(TEXT), split(TEXT), train(INT), valid(INT), test(INT), description(TEXT)
+
+이름이 다른 데이터셋은 전혀 무관하다.
+이름이 같으나 split이 다른 데이터셋으로 만든 모델 간의 평가는 무의미하다. (test, valid data가 다름)
+이름이 같고, split이 같고 valid, test가 동일하면 성능 비교의 의미가 있다.
+이름이 같고, split이 같고 valid, test가 다르면 큰 쪽이 작은 쪽을 포함한다.
+name.split.train_valid_test.tfrecord 정도로 이름을 붙일 수 있다.
+
+ [예상 시나리오]
+데이터셋 생성: 완전히 새로운 데이터셋이 추가된다.
+    new_name.a, split=a, 70, 20, 10
+
+규모 확장: 기존 데이터셋에 이미지(와 마스크)가 추가된다.
+규모 축소: 기존 데이터셋의 일부만을 사용한다.
+기존: 
+    (name, a, 30,10,5, ...)
+valid/test가 확장된 경우:
+    (name, a, 30,20,15, ...)
+train만 늘어난 경우:
+    (name, a, 80,10,5, ...)
+
+	
+기존 데이터셋의 train / valid / test가 변경된다.
+    (크로스 밸리데이션의 경우)
+    name, split=1/5, 80,20,0
+    name, split=2/5, 80,20,0
+    name, split=3/5, 80,20,0
+    name, split=4/5, 80,20,0
+    name, split=5/5, 80,20,0
