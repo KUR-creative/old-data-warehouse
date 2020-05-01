@@ -1,3 +1,12 @@
+CREATE TABLE IF NOT EXISTS executed_command (
+    command     TEXT       NOT NULL,
+    timestamp   TIMESTAMP  WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    git_hash    TEXT,
+    note        TEXT,
+    UNIQUE(command, timestamp)
+);
+
+----------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS file_source (
     name        TEXT    PRIMARY KEY,
     root_path   TEXT    NOT NULL,
