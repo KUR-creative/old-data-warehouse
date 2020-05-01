@@ -1,16 +1,22 @@
-''' CLI interface of data warehouse '''
+''' 
+CLI interface of data warehouse.
+All successful commands are logged in connected DB.
+'''
 # This module is fire cli spec, therefore
 # you must import modules inside of (command) function!
 
-def DROP_ALL(connection):
+def DROP_ALL(connection, note=None):
     ''' 
     DROP ALL of tables in DB. Be careful!
     
     args: 
     connection: string 'id:pw@host:port/dbname' format
+    note: note for running command. it will be logged with command.
     '''
     from parse import parse
     from dw import db
+    import sys
+    print(sys.argv)
     
     print('This command DROP ALL of tables in DB.')
     ans = input('Do you really want? [yes/no] \n')
@@ -27,7 +33,7 @@ def DROP_ALL(connection):
     else:
         return 'Please answer: yes or no.'
         
-def REINIT(connection, schema='./dw/schema/szmc_0.1.0.sql'): 
+def REINIT(connection, schema='./dw/schema/szmc_0.1.0.sql', note=None): 
     ''' 
     DROP ALL of tables in DB and then re-initialize DB. 
     Be careful!
@@ -35,34 +41,41 @@ def REINIT(connection, schema='./dw/schema/szmc_0.1.0.sql'):
     args: 
     schema: schema sql file path. default: './dw/schema/szmc_0.1.0.sql'
     connection: string 'id:pw@host:port/dbname' format
+    note: note for running command. it will be logged with command.
     '''
     ret = DROP_ALL(connection)
     if ret == 'All tables are dropped':
-        return init().szmc_db(connection, schema)
+        return init().szmc_db(connection, schema, note)
     else:
         return ret
     
 class init(object):
     ''' Initialize something. These commands need to be called only once. '''
-    def szmc_db(self, connection, schema='./dw/schema/szmc_0.1.0.sql'):
+    def szmc_db(self, connection, schema='./dw/schema/szmc_0.1.0.sql', note=None):
         '''
         Initialize szmc DB
 
         args: 
         schema: schema sql file path. default: './dw/schema/szmc_0.1.0.sql'
         connection: string 'id:pw@host:port/dbname' format
+        note: note for running command. it will be logged with command.
         '''
         from parse import parse
         from dw import db
+        from dw import log
         
         parsed = parse('{}:{}@{}:{}/{}', connection)
         with open(schema, 'r') as s:
-            return(db.init(s.read(), *parsed) if parsed
-              else f'invalid connection string:\n{connection}')
+            if parsed:
+                ret = db.init(s.read(), *parsed)
+                log.log_cli_cmd(parsed, note) # must be called after init!
+                return ret
+            else:
+                return f'invalid connection string:\n{connection}'
 
 class add(object):
     ''' Add something(s) '''
-    def old_snet(self, root, connection):
+    def old_snet(self, root, connection, note=None):
         '''
         Add old snet data(not dataset!) into db.
 
@@ -88,19 +101,25 @@ class add(object):
         args: 
         root: root directory path string of old snet dataset. (src)
         connection: string 'id:pw@host:port/dbname' format. (dst)
+        note: note for running command. it will be logged with command.
         '''
         from parse import parse
         from dw.data_source import old_snet
+        from dw import log
 
         parsed = parse('{}:{}@{}:{}/{}', connection)
         result = old_snet.save(root, parsed) if parsed else 'conn_parse_error'
-        return('Add success' if result == None
-          else f'invalid connection string:\n{connection}' if parsed == None 
-          else result) # some db error
+        if parsed == None:
+            return f'invalid connection string:\n{connection}' 
+        elif result == None:
+            log.log_cli_cmd(parsed, note)
+            return 'Add success'
+        else:
+            return result
 
 class create(object):
     ''' Create something(s) '''
-    def old_snet(self, split_yaml, connection):
+    def old_snet(self, split_yaml, connection, note=None):
         '''
         Create old snet dataset from old snet data in db(connection)
 
@@ -118,15 +137,18 @@ class create(object):
         args: 
         split_yaml: file path of train/valid/split specified yaml (legacy)
         connection: string 'id:pw@host:port/dbname' format.
+        note: note for running command. it will be logged with command.
         '''
         from parse import parse
         from dw.data_source import old_snet
-        import sys
-        print(sys.argv)
+        from dw import log
 
         parsed = parse('{}:{}@{}:{}/{}', connection)
         result = old_snet.create(split_yaml, parsed) if parsed else 'conn_parse_error'
-        return('Create success' if result == None
-          else f'invalid connection string:\n{connection}' if parsed == None 
-          else result) # some db error
-        print(root, connection)
+        if parsed == None:
+            return f'invalid connection string:\n{connection}' 
+        elif result == None:
+            log.log_cli_cmd(parsed, note)
+            return 'Create success'
+        else:
+            return result
