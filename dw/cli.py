@@ -48,6 +48,22 @@ def REINIT(connection, schema='./dw/schema/szmc_0.1.0.sql', note=None):
         return init().szmc_db(connection, schema, note)
     else:
         return ret
+
+def log(connection):
+    '''
+    Print command log of DB. This command will not logged.
+    '''
+    from parse import parse
+    from dw import log
+    
+    parsed = parse('{}:{}@{}:{}/{}', connection)
+    if parsed:
+        print(str(log.get_cli_cmds(parsed).dataset)
+              .replace('<connection>', connection))
+        return None
+    else:
+        return f'invalid connection string:\n{connection}'
+    
     
 class init(object):
     ''' Initialize something. These commands need to be called only once. '''
