@@ -168,3 +168,27 @@ class create(object):
             return 'Create success'
         else:
             return result
+
+class export(object):
+    ''' Export something(s) to something(s) '''
+    def tfrecord(self, dataset, out_path, option=None):
+        ''' 
+        Export dataset to out_path as tfrecord dataset.
+        
+        dataset='name.split.^.^.^' choose biggest data.
+        if dataset.name = old_snet, option= rbk or wk.
+
+        args: 
+        dataset: string 'name.split.train.valid.test' format.
+        out_path: file path to save tfrecord dataset.
+        option: dataset specific options. rbk/wk for old snet.
+        '''
+        print(dataset, out_path)
+        print(self.tfrecord.__name__)
+        print(export.tfrecord.__name__)
+        print(self.tfrecord == export.tfrecord)
+        print(self.tfrecord.__name__ == export.tfrecord.__name__)
+        print('----')
+        from dw import command
+        print(command.export('tfrecord', 'old_snet', 'ppap'))
+            

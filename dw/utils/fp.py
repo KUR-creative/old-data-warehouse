@@ -132,3 +132,27 @@ def cut_with_bound(pred, xs):
     if chunk: #remaining elements
         yield chunk
 
+# http://codeblog.dhananjaynene.com/2010/08/clojure-style-multi-methods-in-python/
+def multi(switcher_func):
+    ''' Declares a multi map based method which will switch to the
+    appropriate function based on the results of the switcher func'''
+    def dispatcher(*args, **kwargs):
+        key = switcher_func(*args, **kwargs)
+        func = dispatcher.dispatch_map.get(key)
+        if func :
+            return func(*args,**kwargs)
+        else :
+            raise Exception("No function defined for dispatch key: %s" % str(key))
+    dispatcher.dispatch_map = {}
+    return dispatcher
+
+def mmethod(dispatcher, result):
+    ''' The multi method decorator which allows one method at a time
+    to be added to the broader switch for the given result value'''
+    def inner(wrapped):
+        dispatcher.dispatch_map[result] = wrapped
+        # Change the method name from clashing with the multi and allowing
+        # all multi methods to be written using the same name
+        wrapped.__name__ = "_" + wrapped.__name__ + "_" + str(result)
+        return dispatcher
+    return inner
