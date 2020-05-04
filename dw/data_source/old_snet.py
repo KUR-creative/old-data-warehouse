@@ -98,7 +98,7 @@ def save(root, connection):
             .columns('uuid', 'source', 'relpath', 'abspath')
             .insert(*zip(
                 all_uuids, F.repeat(old_snet),
-                abspaths, relpaths
+                relpaths, abspaths
             )),
         # Add images
         Table('image').insert(
