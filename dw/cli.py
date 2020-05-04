@@ -64,6 +64,10 @@ def log(connection):
     else:
         return f'invalid connection string:\n{connection}'
     
+def tmp_tfrecord_test(tfrecord_path='/home/kur/dev/szmc/nn-lab/dataset/snet285wk.tfrecords'):
+    ''' temporary implementation for tfrecord exporting test '''
+    from tests import export_test
+    export_test.tmp_dset_testing(tfrecord_path)
     
 class init(object):
     ''' Initialize something. These commands need to be called only once. '''
