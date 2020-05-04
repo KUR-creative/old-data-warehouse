@@ -171,24 +171,37 @@ class create(object):
 
 class export(object):
     ''' Export something(s) to something(s) '''
-    def tfrecord(self, dataset, out_path, option=None):
+    def tfrecord(self, connection, out_path, dataset, option=None):
         ''' 
-        Export dataset to out_path as tfrecord dataset.
+        Export dataset to tfrecord dataset saved in out_path
         
-        dataset='name.split.^.^.^' choose biggest data.
-        if dataset.name = old_snet, option= rbk or wk.
+        Currently, dataset.name = old_snet, option= rbk or wk.
 
         args: 
-        dataset: string 'name.split.train.valid.test' format.
+        connection: string 'id:pw@host:port/dbname' format
         out_path: file path to save tfrecord dataset.
+        dataset: string 'name.split.train.valid.test' format.
+        'name.split' (tvt omit) then choose biggest dataset.
         option: dataset specific options. rbk/wk for old snet.
         '''
-        print(dataset, out_path)
-        print(self.tfrecord.__name__)
-        print(export.tfrecord.__name__)
-        print(self.tfrecord == export.tfrecord)
-        print(self.tfrecord.__name__ == export.tfrecord.__name__)
-        print('----')
         from dw import command
-        print(command.export('tfrecord', 'old_snet', 'ppap'))
-            
+        from parse import parse
+        
+        db_parsed = parse('{}:{}@{}:{}/{}', connection)
+        if not db_parsed:
+            return f'Invalid connection string:\n{connection}'
+        
+        dset_parsed = parse('{}.{}', dataset)
+        if not dset_parsed:
+            return f'Invalid dataset specification:\n{dset_parsed}'
+        else:
+            parsed = parse('{}.{}.{}.{}.{}', dataset)
+            if parsed:
+                dset = command.Dataset(*parsed)
+            else:
+                name, split = dset_parsed
+                assert '.' not in split
+                dset = command.Dataset(name, split)
+                
+        command.export(
+            db_parsed, out_path, 'tfrecord', dset, option)
