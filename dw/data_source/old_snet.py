@@ -98,7 +98,7 @@ def save(root, connection):
             .columns('uuid', 'source', 'relpath', 'abspath')
             .insert(*zip(
                 all_uuids, F.repeat(old_snet),
-                abspaths, relpaths
+                relpaths, abspaths
             )),
         # Add images
         Table('image').insert(
@@ -181,7 +181,7 @@ def create(split_yaml, connection):
     
     # Build rows of dataset_annotation relation.
     dset_info = [
-        'old_snet', 'a', num_train, num_valid, num_test]
+        'old_snet', 'full', num_train, num_valid, num_test]
     def dset_anno_rows(dset_info, row_dict, usage):
         return F.map(
             lambda row: (
@@ -194,10 +194,13 @@ def create(split_yaml, connection):
         )
 
     # Build query.
+    description =(
+        'Old snet dataset. 동일한 데이터에 어노테이션만 다른 '
+      + 'rbk / wk 데이터를 가지고 있음. split=full은 easy, hard '
+      + '모두 포함하는 데이터라는 뜻')
     query = db.multi_query(
         Table('dataset').insert(
-            *dset_info,
-            'Old snet dataset. tvt split version:a'
+            *dset_info, description
         ),
         Table('dataset_annotation').insert(*F.concat(
             dset_anno_rows(dset_info, rbk, train),

@@ -64,6 +64,10 @@ def log(connection):
     else:
         return f'invalid connection string:\n{connection}'
     
+def tmp_tfrecord_test(tfrecord_path='/home/kur/dev/szmc/nn-lab/dataset/snet285wk.tfrecords'):
+    ''' temporary implementation for tfrecord exporting test '''
+    from tests import export_test
+    export_test.tmp_dset_testing(tfrecord_path)
     
 class init(object):
     ''' Initialize something. These commands need to be called only once. '''
@@ -168,3 +172,40 @@ class create(object):
             return 'Create success'
         else:
             return result
+
+class export(object):
+    ''' Export something(s) to something(s) '''
+    def tfrecord(self, connection, out_path, dataset, option=None):
+        ''' 
+        Export dataset to tfrecord dataset saved in out_path
+        
+        Currently, dataset.name = old_snet, option= rbk or wk.
+
+        args: 
+        connection: string 'id:pw@host:port/dbname' format
+        out_path: file path to save tfrecord dataset.
+        dataset: string 'name.split.train.valid.test' format.
+        'name.split' (tvt omit) then choose biggest dataset.
+        option: dataset specific options. rbk/wk for old snet.
+        '''
+        from dw import command
+        from parse import parse
+        
+        db_parsed = parse('{}:{}@{}:{}/{}', connection)
+        if not db_parsed:
+            return f'Invalid connection string:\n{connection}'
+        
+        dset_parsed = parse('{}.{}', dataset)
+        if not dset_parsed:
+            return f'Invalid dataset specification:\n{dset_parsed}'
+        else:
+            parsed = parse('{}.{}.{}.{}.{}', dataset)
+            if parsed:
+                dset = command.Dataset(*parsed)
+            else:
+                name, split = dset_parsed
+                assert '.' not in split
+                dset = command.Dataset(name, split)
+                
+        command.export(
+            db_parsed, out_path, 'tfrecord', dset, option)
