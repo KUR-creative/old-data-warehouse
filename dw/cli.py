@@ -247,7 +247,8 @@ class export(object):
         'name.split' (tvt omit) then choose biggest dataset.
         option: dataset specific options. rbk/wk for old snet.
         '''
-        from dw import command
+        from dw.tasks import export
+        from dw import common
         from parse import parse
         
         db_parsed = parse('{}:{}@{}:{}/{}', connection)
@@ -260,11 +261,11 @@ class export(object):
         else:
             parsed = parse('{}.{}.{}.{}.{}', dataset)
             if parsed:
-                dset = command.Dataset(*parsed)
+                dset = common.Dataset(*parsed)
             else:
                 name, split = dset_parsed
                 assert '.' not in split
-                dset = command.Dataset(name, split)
+                dset = common.Dataset(name, split)
                 
-        command.export(
+        export.export(
             db_parsed, out_path, 'tfrecord', dset, option)

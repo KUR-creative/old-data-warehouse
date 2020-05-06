@@ -1,5 +1,4 @@
 import os
-from collections import namedtuple
 
 import tensorflow as tf
 import cv2
@@ -9,14 +8,9 @@ import funcy as F
 from pypika import Table, Query
 from bidict import bidict
 
+from dw import common
 from dw.utils import fp
 from dw import db
-
-Dataset = namedtuple(
-    'Dataset',
-    'name split train valid test',
-    defaults=[None, None, None]
-)
 
 def unique_colors(img):
     return np.unique(img.reshape(-1,img.shape[2]), axis=0)
@@ -212,10 +206,10 @@ def generate(train_path_pairs, valid_path_pairs, test_path_pairs,
 def export(connection, out_path, out_form, dataset, option=None):
     return out_form, dataset, option
 
-@fp.mmethod(export, ('tfrecord', Dataset('old_snet', 'full'), 'rbk'))
+@fp.mmethod(export, ('tfrecord', common.Dataset('old_snet', 'full'), 'rbk'))
 def export(connection, out_path, out_form, dataset, option):
     export_old_snet(connection, out_path, dataset, option)
-@fp.mmethod(export, ('tfrecord', Dataset('old_snet', 'full'), 'wk'))
+@fp.mmethod(export, ('tfrecord', common.Dataset('old_snet', 'full'), 'wk'))
 def export(connection, out_path, out_form, dataset, option):
     export_old_snet(connection, out_path, dataset, option)
     
