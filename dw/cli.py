@@ -176,6 +176,61 @@ class create(object):
             return 'Create success'
         else:
             return result
+        
+class generate(object):
+    ''' Generate something(s) '''
+    def snet_easy_only(self, connection, src_dataset, mask_dir_relpath, note=None):
+        '''
+        Create EASY ONLY dataset from src_dataset in db(connection).
+        src_dataset must have rbk scheme data.
+        
+        ----
+        It generate and save mask files. 
+        And it creates dataset: "src_dataset_name_easy.src_dataset_split.train.valid.test"
+          Name of generated dataset = src_dataset_name + '_easy'
+          Split of generated dataset is same with src_dataset.
+        Generated easy-only mask files are saved in root_path/mask_dir_relpath, 
+        where root_path from file_source table.
+        Names of mask files are same with names of src_dataset masks.
+
+        src_dataset(rbk) => generated dataset(wk)
+        EASY ONLY dataset is (old_snet, wk) dataset where
+        white masks are only easy-text(red masks in rbk scheme)
+        tvt split will be same with old_snet.full
+        
+        ----
+        src_dataset must be consist of <image,mask> pairs that splitted in train/valid/test.
+        ex) {train: [0,1, ...], valid: [2,3, ..], test: [6,7, ..]} 
+        id is name of image/mask files in old snet (id is old snet specific data).
+
+        the dataset is row of 'dataset' table. 
+        And the contents of dataset is implicitly saved 
+        in 'dataset_annotation' table.
+        
+        args: 
+        connection: string 'id:pw@host:port/dbname' format
+        src_dataset: string 'name.split.train.valid.test' format.
+        'name.split' (tvt omit) then choose biggest dataset.
+        mask_dir_relpath: directory path to save generated easy text only masks.
+        It relative to root_path of src_dataset. 
+        note: note for running command. it will be logged with command.
+        '''
+        from parse import parse
+        from dw import generate
+        from dw import log
+
+        '''
+        parsed = parse('{}:{}@{}:{}/{}', connection)
+        result = old_snet.create(split_yaml, parsed) if parsed else 'conn_parse_error'
+        if parsed == None:
+            return f'invalid connection string:\n{connection}' 
+        elif result == None:
+            log.log_cli_cmd(parsed, note)
+            return 'Create success'
+        else:
+            return result
+        '''
+        print('!')
 
 class export(object):
     ''' Export something(s) to something(s) '''
