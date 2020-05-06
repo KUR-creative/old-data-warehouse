@@ -39,6 +39,7 @@ def export_old_snet(connection, out_path, dset, option):
              .where(
                  (dataset.name == dset.name) &
                  (dataset.split == dset.split) &
+                 # TODO: get biggest dataset
                  (dataset_annotation.output == mask.uuid) &
                  (file_in.uuid == dataset_annotation.input) &
                  (file_out.uuid == dataset_annotation.output) &

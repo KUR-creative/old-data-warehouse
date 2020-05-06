@@ -179,7 +179,7 @@ class create(object):
         
 class generate(object):
     ''' Generate something(s) '''
-    def snet_easy_only(self, connection, src_dataset, mask_dir_relpath, note=None):
+    def easy_only(self, connection, src_dataset, mask_dir_relpath='easy_only', note=None):
         '''
         Create EASY ONLY dataset from src_dataset in db(connection).
         src_dataset must have rbk scheme data.
@@ -212,25 +212,34 @@ class generate(object):
         src_dataset: string 'name.split.train.valid.test' format.
         'name.split' (tvt omit) then choose biggest dataset.
         mask_dir_relpath: directory path to save generated easy text only masks.
-        It relative to root_path of src_dataset. 
+        It relative to root_path of src_dataset. Default = 'easy_only'
         note: note for running command. it will be logged with command.
         '''
         from parse import parse
-        from dw import generate
+        from dw.tasks import generate
         from dw import log
+        from dw import common
 
-        '''
-        parsed = parse('{}:{}@{}:{}/{}', connection)
-        result = old_snet.create(split_yaml, parsed) if parsed else 'conn_parse_error'
-        if parsed == None:
-            return f'invalid connection string:\n{connection}' 
-        elif result == None:
-            log.log_cli_cmd(parsed, note)
-            return 'Create success'
+        # connection, src_dataset, mask_dir_relpath, note=None
+        db_parsed = parse('{}:{}@{}:{}/{}', connection)
+        if not db_parsed:
+            return f'Invalid connection string:\n{connection}'
+        
+        dset_parsed = parse('{}.{}', src_dataset)
+        if not dset_parsed:
+            return f'Invalid src_dataset specification:\n{dset_parsed}'
         else:
-            return result
-        '''
-        print('!')
+            parsed = parse('{}.{}.{}.{}.{}', src_dataset)
+            if parsed:
+                dset = common.Dataset(*parsed)
+            else:
+                name, split = dset_parsed
+                assert '.' not in split
+                dset = common.Dataset(name, split)
+
+        # Didn't check mask_dir_relpath validity. But maybe it's okay..
+                
+        generate.generate(db_parsed, dset, 'easy_only', mask_dir_relpath)
 
 class export(object):
     ''' Export something(s) to something(s) '''
