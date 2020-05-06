@@ -1,6 +1,10 @@
 ''' 
 CLI interface of data warehouse.
 All successful commands are logged in connected DB.
+
+The functions defined in this module prepare for 'task'.
+ex) Parsing argument. Reporting error when arg parse fail..
+All other jobs are executed by functions in 'tasks' package.
 '''
 # This module is fire cli spec, therefore
 # you must import modules inside of (command) function!
@@ -65,7 +69,7 @@ def log(connection):
         return f'invalid connection string:\n{connection}'
     
 def tmp_tfrecord_test(tfrecord_path='/home/kur/dev/szmc/nn-lab/dataset/snet285wk.tfrecords'):
-    ''' temporary implementation for tfrecord exporting test '''
+    ''' temporary implementation for tfrecord exporting test. This command will not logged.  '''
     from tests import export_test
     export_test.tmp_dset_testing(tfrecord_path)
     
