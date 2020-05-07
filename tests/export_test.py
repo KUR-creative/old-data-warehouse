@@ -161,8 +161,7 @@ def decode_raw(str_tensor, shape, dtype=tf.float32):
 
 @tf.function(experimental_relax_shapes=True) 
 def crop(img, mask, size):
-    ''' Crop img and mask in (size, size) at same (y,x). 
-    '''
+    ''' Crop img and mask in (size, size) at same (y,x). '''
     h = tf.shape(img)[0]
     w = tf.shape(img)[1]
     #assert (h,w,1) == mask.shape
@@ -190,7 +189,7 @@ def tmp_dset_testing(expected_dset_path):
     n_train = dset["num_train"]
     
     BATCH_SIZE = 4
-    EPOCHS = 4
+    EPOCHS = 2
     IMG_SIZE = 700
     
     @tf.function
@@ -199,17 +198,24 @@ def tmp_dset_testing(expected_dset_path):
         w  = datum["w"]
         c  = datum["c"]
         mc = datum["mc"]
+        return (
+            decode_raw(datum["img"], (h,w,c)),
+            decode_raw(datum["mask"], (h,w,mc))
+        )
+
+        '''
         return crop(
             decode_raw(datum["img"], (h,w,c)),
             decode_raw(datum["mask"], (h,w,mc)), 
             IMG_SIZE)
+        '''
 
     seq = enumerate(
         dset["train"]
-            .take(4)
+            #.take(4)
             .shuffle(n_train, reshuffle_each_iteration=True)
             .map(crop_datum, tf.data.experimental.AUTOTUNE)
-            .batch(BATCH_SIZE)
+            #.batch(BATCH_SIZE)
             .repeat(EPOCHS)
             .prefetch(tf.data.experimental.AUTOTUNE), 
         start=1)
@@ -229,6 +235,14 @@ def tmp_dset_testing(expected_dset_path):
         #print(img_batch.numpy().shape)
         #print(mask_batch.numpy().shape)
         '''
+        print(step)
+        img, mask = img_batch.numpy(), mask_batch.numpy()
+        #mapped_mask = mask
+        mapped_mask = map_colors(src_dst_colormap.inverse, mask)
+        cv2.imshow("i", img)
+        cv2.imshow("m", mapped_mask)
+        cv2.waitKey(0)
+        '''
         for i in range(len(img_batch)):
             
             print('i:',i)
@@ -239,6 +253,7 @@ def tmp_dset_testing(expected_dset_path):
             cv2.imshow("m", mapped_mask)
             cv2.waitKey(0)
             #print(unique_colors(mask))
+        '''
 
 def test_export():
     # for pytest
