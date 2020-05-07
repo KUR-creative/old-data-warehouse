@@ -23,8 +23,11 @@ def export(connection, out_path, out_form, dataset, option):
 @fp.mmethod(export, ('tfrecord', common.Dataset('old_snet', 'full'), 'wk'))
 def export(connection, out_path, out_form, dataset, option):
     export_old_snet(connection, out_path, dataset, option)
+@fp.mmethod(export, ('tfrecord', common.Dataset('old_snet', 'easy_only'), 'easy_only'))
+def export(connection, out_path, out_form, dataset, option):
+    export_old_snet(connection, out_path, dataset, option)
     
-def export_old_snet(connection, out_path, dset, option):
+def export_old_snet(connection, out_path, dset, mask_scheme):
     file_in = Table('file').as_('file_in')
     file_out = Table('file').as_('file_out')
     mask = Table('mask'); dataset = Table('dataset')
@@ -43,7 +46,7 @@ def export_old_snet(connection, out_path, dset, option):
                  (dataset_annotation.output == mask.uuid) &
                  (file_in.uuid == dataset_annotation.input) &
                  (file_out.uuid == dataset_annotation.output) &
-                 (mask.scheme == option)
+                 (mask.scheme == mask_scheme)
              ),
         *connection
     )
@@ -65,9 +68,9 @@ def export_old_snet(connection, out_path, dset, option):
 
     src_dst_colormap = {
         (255,0,0):(1,0,0), (0,0,255):(0,1,0), (0,0,0):(0,0,1)
-    } if option == 'rbk' else {
+    } if mask_scheme == 'rbk' else {
         (255,255,255):(1,0), (0,0,0):(0,1)
-    } if option == 'wk' else None
+    } if mask_scheme == 'wk' or mask_scheme == 'easy_only' else None
     
     generate(train_pairs, valid_pairs, test_pairs,
              src_dst_colormap, out_path)
