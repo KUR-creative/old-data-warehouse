@@ -9,8 +9,11 @@ pipe = F.rcompose
 def inc(x): return x + 1
 def dec(x): return x - 1
 
+def is_empty(coll):
+    return (not coll)
+
 def take(n, seq=None):
-    return F.take(n,seq) if seq != None \
+    return F.take(n,seq) if not is_empty(seq) \
     else lambda xs: F.take(n,xs)
 
 def plus(*xs):
@@ -33,69 +36,69 @@ def unzip(seq):
     return zip(*seq)
 
 def map(f,*seq):
-    return F.map(f,*seq) if seq != None \
+    return F.map(f,*seq) if not is_empty(seq) \
     else lambda *xs: F.map(f,*xs)
 def lmap(f,*seq):
-    return F.lmap(f,*seq) if seq != None \
+    return F.lmap(f,*seq) if not is_empty(seq) \
     else lambda *xs: F.lmap(f,*xs)
 def tmap(f,*seq):
-    return tuple(F.map(f,*seq)) if seq != None \
+    return tuple(F.map(f,*seq)) if not is_empty(seq) \
     else lambda *xs: tuple(F.map(f,*xs))
 
 def filter(f,*seq):
-    return F.filter(f,*seq) if seq != None \
+    return F.filter(f,*seq) if not is_empty(seq) \
     else lambda *xs: F.filter(f,*xs)
 def lfilter(f,*seq):
-    return F.lfilter(f,*seq) if seq != None \
+    return F.lfilter(f,*seq) if not is_empty(seq) \
     else lambda *xs: F.lfilter(f,*xs)
 def tfilter(f,*seq):
-    return tuple(F.filter(f,*seq)) if seq != None \
+    return tuple(F.filter(f,*seq)) if not is_empty(seq) \
     else lambda *xs: tuple(F.filter(f,*xs))
 
 def remove(f,*seq):
-    return F.remove(f,*seq) if seq != None \
+    return F.remove(f,*seq) if not is_empty(seq) \
     else lambda *xs: F.remove(f,*xs)
 def lremove(f,*seq):
-    return F.lremove(f,*seq) if seq != None \
+    return F.lremove(f,*seq) if not is_empty(seq) \
     else lambda *xs: F.lremove(f,*xs)
 def tremove(f,*seq):
-    return tuple(F.remove(f,*seq)) if seq != None \
+    return tuple(F.remove(f,*seq)) if not is_empty(seq) \
     else lambda *xs: tuple(F.remove(f,*xs))
 
 def starmap(f,*seq):
-    return I.starmap(f,*seq) if seq != None \
+    return I.starmap(f,*seq) if not is_empty(seq) \
     else lambda *xs: I.starmap(f,*xs)
 def lstarmap(f,*seq):
-    return list(I.starmap(f,*seq)) if seq != None \
+    return list(I.starmap(f,*seq)) if not is_empty(seq) \
     else lambda *xs: list(I.starmap(f,*xs))
 def tstarmap(f,*seq):
-    return tuple(I.starmap(f,*seq)) if seq != None \
+    return tuple(I.starmap(f,*seq)) if not is_empty(seq) \
     else lambda *xs: tuple(I.starmap(f,*xs))
 
 def mapcat(f,*seq):
-    return F.mapcat(f,*seq) if seq != None \
+    return F.mapcat(f,*seq) if not is_empty(seq) \
     else lambda *xs: F.mapcat(f,*xs)
 def lmapcat(f,*seq):
-    return F.lmapcat(f,*seq) if seq != None \
+    return F.lmapcat(f,*seq) if not is_empty(seq) \
     else lambda *xs: F.lmapcat(f,*xs)
 def tmapcat(f,*seq):
-    return tuple(F.mapcat(f,*seq)) if seq != None \
+    return tuple(F.mapcat(f,*seq)) if not is_empty(seq) \
     else lambda *xs: tuple(F.mapcat(f,*xs))
 
 def walk(f,*seq):
-    return F.walk(f,*seq) if seq != None \
+    return F.walk(f,*seq) if not is_empty(seq) \
     else lambda *xs: F.walk(f,*xs)
 
 def group_by(f, seq=None):
-    return F.group_by(f, seq) if seq != None\
+    return F.group_by(f, seq) if not is_empty(seq)\
     else lambda xs: F.group_by(f, xs)
 
 def walk_values(f, coll=None):
-    return F.walk_values(f, coll) if coll != None\
+    return F.walk_values(f, coll) if not is_empty(coll) \
     else lambda coll: F.walk_values(f, coll)
 
 def walk_keys(f, coll=None):
-    return F.walk_keys(f, coll) if coll != None\
+    return F.walk_keys(f, coll) if not is_empty(coll) \
     else lambda coll: F.walk_keys(f, coll)
 
 def split_with(sep_idxs, li):
@@ -122,9 +125,6 @@ def partition_with(nums_in_parts, seq):
 def foreach(f,*seq):
     F.lmap(f,*seq)
     return None
-
-def is_empty(coll):
-    return (not coll)
 
 def dict2namedtuple(type_name, dic):
     return namedtuple(type_name, sorted(dic))(**dic)
