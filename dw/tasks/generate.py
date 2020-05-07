@@ -7,7 +7,7 @@ import funcy as F
 from tqdm import tqdm
 
 from dw import common
-from dw.utils import fp
+from dw.utils import fp, etc
 from dw import db
 
 
@@ -45,7 +45,11 @@ def generate_snet_easy(connection, src_dataset, out_form, mask_dir_relpath):
     mask_row = Table('mask')
     rows = db.get(
         Query.from_(mask_file).from_(dataset_annotation).from_(mask_row)
-             .select(mask_file.abspath, mask_file.relpath, dataset_annotation.usage)
+             .select(
+                 dataset_annotation.input,
+                 dataset_annotation.usage,
+                 mask_file.abspath,
+                 mask_file.relpath)
              .where(
                  # dataset
                  (dataset_annotation.name == src_dataset.name) &
@@ -68,31 +72,98 @@ def generate_snet_easy(connection, src_dataset, out_form, mask_dir_relpath):
     )
 
     # Get destination paths
-    dstpaths = fp.lmap(
+    relpaths = fp.lmap(
         fp.pipe(
-            lambda r: r.relpath,
-            lambda p: Path(p).name,
-            lambda p: Path(root, mask_dir_relpath, p)),
-        rows,
+            lambda row: row.relpath,
+            lambda path: Path(path).name,
+            lambda name: Path(mask_dir_relpath, name),
+            str
+        ),
+        rows
     )
+    abspaths = fp.lmap(
+        lambda path: str(Path(root, path)), relpaths
+    )
+    #print(*zip(abspaths,relpaths),sep='\n')
+    #exit()
 
     # Save easy only masks to destination paths
+    '''
     os.makedirs(Path(root, mask_dir_relpath), exist_ok=True)
     print('Generate & Save easy text only masks...')
-    for mask, dstpath in tqdm(zip(red_maskseq, dstpaths), total=len(dstpaths)):
-        #cv2.imshow('mask',mask); cv2.waitKey(0)
+    for mask, dstpath in tqdm(zip(red_maskseq, abspaths), total=len(abspaths)):
+        #cv2.imshow('mask',mask); cv2.waitKey(0) # look & feel check
         cv2.imwrite(str(dstpath), mask)
     print('Done!')
+    '''
 
-    # Save data to file, mask_scheme, mask_scheme_content,
-    #   mask(easy_only scheme), snet_annotation, dataset_annotation
+    # Has db easy only scheme?
+    easy_only = 'easy_only'
+    mask_scheme = Table('mask_scheme')
+    has_easy_only_scheme = db.get(
+        mask_scheme.select('*').where(mask_scheme.name == easy_only),
+        *connection
+    ).as_dict()
+    
+    # If not, add new mask scheme: easy_only
+    if not has_easy_only_scheme:
+        query = db.multi_query(
+            Table('mask_scheme').insert(
+                easy_only, 'white, black 2class, easy-text only dataset'),
+            Table('mask_scheme_content').insert(
+                (easy_only, '#FFFFFF', 'text'),
+                (easy_only, '#000000', 'background')), 
+        )
+        db.run(query, *connection)
+        print(query)
+
+    # Save generated mask files, mask, snet_annotation, dataset_annotation
+    # This procedure similar to 'add' command, but image source is implicit.
+    img_uuids = fp.lmap(lambda r: str(r.input), rows)
+    mask_uuids = etc.uuid4strs(len(abspaths))
+    insert_masks_query = db.multi_query(
+        Query.into('file')
+            .columns('uuid', 'source', 'relpath', 'abspath')
+            .insert(*zip(
+                mask_uuids, F.repeat('old_snet'), relpaths, abspaths
+            )),
+        Table('mask').insert(*zip(
+            mask_uuids, F.repeat(easy_only)
+        )),
+        Table('snet_annotation').insert(*zip(
+            img_uuids, mask_uuids
+        ))
+    )
+    
+    db.run(insert_masks_query, *connection)
+    '''
+    # Save easy_only dataset
+    num_train = len(fp.lfilter(lambda r: r.usage, rows))
+    num_valid = len(fp.lfilter(lambda r: r.usage, rows))
+    num_test = len(fp.lfilter(lambda r: r.usage, rows))
+    dset_info = [
+        'old_snet', easy_only, num_train, num_valid, num_test]
+    description =(
+        'old snet easy only dataset. split=easy_only는 '
+      + 'easy text만 포함하는 데이터라는 뜻')
+    insert_dataset_query = db.multi_query(
+        Table('dataset').insert(
+            *dset_info, description
+        ),
+        Table('dataset_annotation').insert(
+        )
+    )
+    print(*insert_masks_query.split(';'),sep='\n\n')
+    
+    # Save data to
+    #   file, mask(easy_only scheme), snet_annotation, dataset_annotation
     #   TODO: This procedure can be extracted as function: 'save_annotations'
     #         Some parts of proc could be duplicated with data_source.save
 
-    '''
-    query = db.multi_query(
-        Query.into('file')
-
+    #   Check Uniqueness. if not unique, just skip.
+    
+    
+    
     for r, rm, dp in zip(rows, red_maskseq, dst_paths):
         print(r['abspath'], dp)
     print(mask_dir_relpath)
