@@ -1,5 +1,4 @@
 import os
-from collections import namedtuple
 
 import tensorflow as tf
 import cv2
@@ -9,15 +8,71 @@ import funcy as F
 from pypika import Table, Query
 from bidict import bidict
 
+from dw import common
 from dw.utils import fp
 from dw import db
 
-Dataset = namedtuple(
-    'Dataset',
-    'name split train valid test',
-    defaults=[None, None, None]
-)
 
+@fp.multi
+def export(connection, out_path, out_form, dataset, option=None):
+    return out_form, dataset, option
+
+@fp.mmethod(export, ('tfrecord', common.Dataset('old_snet', 'full'), 'rbk'))
+def export(connection, out_path, out_form, dataset, option):
+    export_old_snet(connection, out_path, dataset, option)
+@fp.mmethod(export, ('tfrecord', common.Dataset('old_snet', 'full'), 'wk'))
+def export(connection, out_path, out_form, dataset, option):
+    export_old_snet(connection, out_path, dataset, option)
+    
+def export_old_snet(connection, out_path, dset, option):
+    file_in = Table('file').as_('file_in')
+    file_out = Table('file').as_('file_out')
+    mask = Table('mask'); dataset = Table('dataset')
+    dataset_annotation = Table('dataset_annotation')
+    
+    raw_rows = db.get_pg(
+        Query.from_(dataset).from_(dataset_annotation)
+             .from_(mask).from_(file_in).from_(file_out)
+             .select(
+                 file_in.abspath, file_out.abspath,
+                 dataset_annotation.usage)
+             .where(
+                 (dataset.name == dset.name) &
+                 (dataset.split == dset.split) &
+                 # TODO: get biggest dataset
+                 (dataset_annotation.output == mask.uuid) &
+                 (file_in.uuid == dataset_annotation.input) &
+                 (file_out.uuid == dataset_annotation.output) &
+                 (mask.scheme == option)
+             ),
+        *connection
+    )
+    rows = F.lmap(
+        fp.tup(lambda in_path, out_path, usage:
+            dict(img=in_path, mask=out_path, usage=usage)),
+        raw_rows
+    )
+
+    trains = F.lfilter(lambda r: r['usage'] == 'train', rows)
+    valids = F.lfilter(lambda r: r['usage'] == 'valid', rows)
+    tests = F.lfilter(lambda r: r['usage'] == 'test', rows)
+
+    def row2pair(row):
+        return row['img'], row['mask']
+    train_pairs = F.lmap(row2pair, trains)
+    valid_pairs = F.lmap(row2pair, valids)
+    test_pairs = F.lmap(row2pair, tests)
+
+    src_dst_colormap = {
+        (255,0,0):(1,0,0), (0,0,255):(0,1,0), (0,0,0):(0,0,1)
+    } if option == 'rbk' else {
+        (255,255,255):(1,0), (0,0,0):(0,1)
+    } if option == 'wk' else None
+    
+    generate(train_pairs, valid_pairs, test_pairs,
+             src_dst_colormap, out_path)
+
+#-------------------------------------------------------------------------------
 def unique_colors(img):
     return np.unique(img.reshape(-1,img.shape[2]), axis=0)
 
@@ -85,6 +140,7 @@ def map_colors(src_dst_colormap, img):
 
     return ret_img
 
+#-------------------------------------------------------------------------------
 def hex_rgb(tup_rgb):
     assert len(tup_rgb) == 3
     for val in tup_rgb:
@@ -207,61 +263,3 @@ def generate(train_path_pairs, valid_path_pairs, test_path_pairs,
         for img_bin, mask_bin in tqdm(zip(imgseq, maskseq), total=len(img_paths)):
             tf_example = datum_example(img_bin, mask_bin)
             writer.write(tf_example.SerializeToString())
-
-@fp.multi
-def export(connection, out_path, out_form, dataset, option=None):
-    return out_form, dataset, option
-
-@fp.mmethod(export, ('tfrecord', Dataset('old_snet', 'full'), 'rbk'))
-def export(connection, out_path, out_form, dataset, option):
-    export_old_snet(connection, out_path, dataset, option)
-@fp.mmethod(export, ('tfrecord', Dataset('old_snet', 'full'), 'wk'))
-def export(connection, out_path, out_form, dataset, option):
-    export_old_snet(connection, out_path, dataset, option)
-    
-def export_old_snet(connection, out_path, dset, option):
-    file_in = Table('file').as_('file_in')
-    file_out = Table('file').as_('file_out')
-    mask = Table('mask'); dataset = Table('dataset')
-    dataset_annotation = Table('dataset_annotation')
-    
-    raw_rows = db.get_pg(
-        Query.from_(dataset).from_(dataset_annotation)
-             .from_(mask).from_(file_in).from_(file_out)
-             .select(
-                 file_in.abspath, file_out.abspath,
-                 dataset_annotation.usage)
-             .where(
-                 (dataset.name == dset.name) &
-                 (dataset.split == dset.split) &
-                 (dataset_annotation.output == mask.uuid) &
-                 (file_in.uuid == dataset_annotation.input) &
-                 (file_out.uuid == dataset_annotation.output) &
-                 (mask.scheme == option)
-             ),
-        *connection
-    )
-    rows = F.lmap(
-        fp.tup(lambda in_path, out_path, usage:
-            dict(img=in_path, mask=out_path, usage=usage)),
-        raw_rows
-    )
-
-    trains = F.lfilter(lambda r: r['usage'] == 'train', rows)
-    valids = F.lfilter(lambda r: r['usage'] == 'valid', rows)
-    tests = F.lfilter(lambda r: r['usage'] == 'test', rows)
-
-    def row2pair(row):
-        return row['img'], row['mask']
-    train_pairs = F.lmap(row2pair, trains)
-    valid_pairs = F.lmap(row2pair, valids)
-    test_pairs = F.lmap(row2pair, tests)
-
-    src_dst_colormap = {
-        (255,0,0):(1,0,0), (0,0,255):(0,1,0), (0,0,0):(0,0,1)
-    } if option == 'rbk' else {
-        (255,255,255):(1,0), (0,0,0):(0,1)
-    } if option == 'wk' else None
-    
-    generate(train_pairs, valid_pairs, test_pairs,
-             src_dst_colormap, out_path)

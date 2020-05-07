@@ -8,7 +8,6 @@ root direcory must be satisfy following structure.
 import os
 from pathlib import Path
 import json
-import uuid
 
 import funcy as F
 from pypika import Table, Query
@@ -73,17 +72,14 @@ def save(root, connection):
     img_abspaths = sorted_children(Path(root, 'image'))
     rbk_abspaths = sorted_children(Path(root, 'clean_rbk'))
     wk_abspaths = sorted_children(Path(root, 'clean_wk'))
+    
     img_relpaths = fp.lmap(relpath, img_abspaths)
     rbk_relpaths = fp.lmap(relpath, rbk_abspaths)
     wk_relpaths = fp.lmap(relpath, wk_abspaths)
     
-    # Generate uuids.
-    def uuids(length):
-        return list(F.repeatedly(
-            lambda: str(uuid.uuid4()), length))
-    img_uuids = uuids(len(img_abspaths))
-    rbk_uuids = uuids(len(rbk_abspaths))
-    wk_uuids = uuids(len(wk_abspaths))
+    img_uuids = etc.uuid4strs(len(img_abspaths))
+    rbk_uuids = etc.uuid4strs(len(rbk_abspaths))
+    wk_uuids = etc.uuid4strs(len(wk_abspaths))
     
     all_uuids = img_uuids + rbk_uuids + wk_uuids
     abspaths = img_abspaths + rbk_abspaths + wk_abspaths
@@ -183,7 +179,7 @@ def create(split_yaml, connection):
     dset_info = [
         'old_snet', 'full', num_train, num_valid, num_test]
     def dset_anno_rows(dset_info, row_dict, usage):
-        return F.map(
+        return fp.lmap(
             lambda row: (
                 *dset_info,
                 str(row['input']),
