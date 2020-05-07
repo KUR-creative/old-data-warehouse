@@ -185,18 +185,19 @@ class generate(object):
         src_dataset must have rbk scheme data.
         
         ----
-        It generate and save mask files. 
-        And it creates dataset: "src_dataset_name_easy.src_dataset_split.train.valid.test"
-          Name of generated dataset = src_dataset_name + '_easy'
-          Split of generated dataset is same with src_dataset.
+        It generate and save easy-only mask(red mask from rbk scheme) files. 
+        And it creates dataset: "src_dataset_name.easy_only.train.valid.test"
+          Name of generated dataset = src_dataset_name (same)
+          Split of generated dataset = easy_only (same dataset different split)
         Generated easy-only mask files are saved in root_path/mask_dir_relpath, 
         where root_path from file_source table.
-        Names of mask files are same with names of src_dataset masks.
+        Names of mask files are same with names of src_dataset mask files.
 
         src_dataset(rbk) => generated dataset(wk)
+        
+        new mask scheme "easy_only" will be created if not exists.
         EASY ONLY dataset is (old_snet, wk) dataset where
         white masks are only easy-text(red masks in rbk scheme)
-        tvt split will be same with old_snet.full
         
         ----
         src_dataset must be consist of <image,mask> pairs that splitted in train/valid/test.

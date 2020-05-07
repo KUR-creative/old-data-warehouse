@@ -72,6 +72,7 @@ def save(root, connection):
     img_abspaths = sorted_children(Path(root, 'image'))
     rbk_abspaths = sorted_children(Path(root, 'clean_rbk'))
     wk_abspaths = sorted_children(Path(root, 'clean_wk'))
+    
     img_relpaths = fp.lmap(relpath, img_abspaths)
     rbk_relpaths = fp.lmap(relpath, rbk_abspaths)
     wk_relpaths = fp.lmap(relpath, wk_abspaths)
@@ -178,7 +179,7 @@ def create(split_yaml, connection):
     dset_info = [
         'old_snet', 'full', num_train, num_valid, num_test]
     def dset_anno_rows(dset_info, row_dict, usage):
-        return F.map(
+        return fp.lmap(
             lambda row: (
                 *dset_info,
                 str(row['input']),

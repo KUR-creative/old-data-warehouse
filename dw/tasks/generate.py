@@ -21,6 +21,15 @@ def generate(connection, src_dataset, out_form, option):
     generate_snet_easy(connection, src_dataset, out_form, option)
 
 def generate_snet_easy(connection, src_dataset, out_form, mask_dir_relpath):
+    '''
+    Generate snet easy_only dataset from DB
+    1. Get data from Db.
+    2. Generate target data from 1.data.
+    3. save Generated data to file system and DB.
+    '''
+    #-----------------------------------------------------------------------
+    # 1. Get data from Db
+    #-----------------------------------------------------------------------
     # Get biggest dataset
     train, valid, test = 'train', 'valid', 'test'
     tvt = db.get(
@@ -63,6 +72,9 @@ def generate_snet_easy(connection, src_dataset, out_form, mask_dir_relpath):
                  (mask_row.scheme == 'rbk')),
         *connection)
 
+    #-----------------------------------------------------------------------
+    # 2. Generate target data from 1.data
+    #-----------------------------------------------------------------------
     # Get red mask sequence
     red_maskseq = fp.map(
         fp.pipe(
@@ -84,18 +96,17 @@ def generate_snet_easy(connection, src_dataset, out_form, mask_dir_relpath):
     abspaths = fp.lmap(
         lambda path: str(Path(root, path)), relpaths
     )
-    #print(*zip(abspaths,relpaths),sep='\n')
-    #exit()
 
+    #-----------------------------------------------------------------------
+    # 3. save Generated data
+    #-----------------------------------------------------------------------
     # Save easy only masks to destination paths
-    '''
     os.makedirs(Path(root, mask_dir_relpath), exist_ok=True)
     print('Generate & Save easy text only masks...')
     for mask, dstpath in tqdm(zip(red_maskseq, abspaths), total=len(abspaths)):
         #cv2.imshow('mask',mask); cv2.waitKey(0) # look & feel check
         cv2.imwrite(str(dstpath), mask)
     print('Done!')
-    '''
 
     # Has db easy only scheme?
     easy_only = 'easy_only'
@@ -115,7 +126,6 @@ def generate_snet_easy(connection, src_dataset, out_form, mask_dir_relpath):
                 (easy_only, '#000000', 'background')), 
         )
         db.run(query, *connection)
-        print(query)
 
     # Save generated mask files, mask, snet_annotation, dataset_annotation
     # This procedure similar to 'add' command, but image source is implicit.
@@ -125,7 +135,7 @@ def generate_snet_easy(connection, src_dataset, out_form, mask_dir_relpath):
         Query.into('file')
             .columns('uuid', 'source', 'relpath', 'abspath')
             .insert(*zip(
-                mask_uuids, F.repeat('old_snet'), relpaths, abspaths
+                mask_uuids, F.repeat(src_dataset.name), relpaths, abspaths
             )),
         Table('mask').insert(*zip(
             mask_uuids, F.repeat(easy_only)
@@ -135,14 +145,13 @@ def generate_snet_easy(connection, src_dataset, out_form, mask_dir_relpath):
         ))
     )
     
-    db.run(insert_masks_query, *connection)
-    '''
     # Save easy_only dataset
-    num_train = len(fp.lfilter(lambda r: r.usage, rows))
-    num_valid = len(fp.lfilter(lambda r: r.usage, rows))
-    num_test = len(fp.lfilter(lambda r: r.usage, rows))
+    # This procedure similar to 'create' command, but split is implicit.
+    num_train = len(fp.lfilter(lambda r: r.usage == 'train', rows))
+    num_valid = len(fp.lfilter(lambda r: r.usage == 'valid', rows))
+    num_test = len(fp.lfilter(lambda r: r.usage == 'test', rows))
     dset_info = [
-        'old_snet', easy_only, num_train, num_valid, num_test]
+        src_dataset.name, easy_only, num_train, num_valid, num_test]
     description =(
         'old snet easy only dataset. split=easy_only는 '
       + 'easy text만 포함하는 데이터라는 뜻')
@@ -150,51 +159,15 @@ def generate_snet_easy(connection, src_dataset, out_form, mask_dir_relpath):
         Table('dataset').insert(
             *dset_info, description
         ),
-        Table('dataset_annotation').insert(
-        )
+        Table('dataset_annotation').insert(*fp.map(
+            lambda row, output: (
+                *dset_info, str(row.input), output, row.usage
+            ),
+            rows, mask_uuids
+        ))
     )
-    print(*insert_masks_query.split(';'),sep='\n\n')
     
-    # Save data to
-    #   file, mask(easy_only scheme), snet_annotation, dataset_annotation
-    #   TODO: This procedure can be extracted as function: 'save_annotations'
-    #         Some parts of proc could be duplicated with data_source.save
-
-    #   Check Uniqueness. if not unique, just skip.
-    
-    
-    
-    for r, rm, dp in zip(rows, red_maskseq, dst_paths):
-        print(r['abspath'], dp)
-    print(mask_dir_relpath)
-    
-    for r in rows: print(r)
-
-    #for mp in red_maskseq: print(mp)
-    for m in red_maskseq:
-        cv2.imshow('m',m)
-        cv2.waitKey(0)
-
-    
-    mask_paths = fp.group_by(lambda row: row['usage'], rows)
-    mask_abspaths = fp.go(
-        mask_paths,
-        fp.walk_values(fp.lmap(lambda row: row.abspath)),
-        dict
-    )
-    mask_relpaths = fp.go(
-        mask_paths,
-        fp.walk_values(fp.lmap(lambda row: row.relpath)),
-        dict
-    )
-
-    from pprint import pprint
-    #pprint(mask_paths)
-    print(type(mask_paths))
-    #pprint(mask_abspaths)
-    #pprint(mask_relpaths)
-
-    # Save to mask_dir_relpath/same_name_src_masks
-    maskseq = fp.walk_values(fp.map(path2red_mask), mask_abspaths)
-    '''
-    
+    db.run(db.multi_query(
+        insert_masks_query,
+        insert_dataset_query
+    ), *connection)
