@@ -1,4 +1,8 @@
+import uuid
 import socket
+
+import funcy as F
+
 def host_ip():
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     try:
@@ -10,3 +14,8 @@ def host_ip():
     finally:
         s.close()
     return IP
+
+def uuid4strs(length):
+    return list(F.repeatedly(
+        lambda: str(uuid.uuid4()), length
+    ))
