@@ -255,7 +255,7 @@ class generate(object):
 
 class export(object):
     ''' Export DATASET(in db) to ARTIFACT(dataset file) '''
-    def tfrecord(self, connection, out_path, dataset, option):
+    def tfrecord(self, connection, out_path, dataset, option, note=None):
         ''' 
         Export dataset to tfrecord dataset saved in out_path
         
@@ -267,9 +267,11 @@ class export(object):
         dataset: string 'name.split.train.valid.test' format.
         'name.split' (tvt omit) then choose biggest dataset.
         option: dataset specific options. rbk/wk for old snet.
+        note: note for running command. it will be logged with command.
         '''
         from dw.tasks import export
         from dw import common
+        from dw import log
         from parse import parse
         
         db_parsed = parse('{}:{}@{}:{}/{}', connection)
@@ -288,5 +290,6 @@ class export(object):
                 assert '.' not in split
                 dset = common.Dataset(name, split)
                 
-        export.export(
-            db_parsed, out_path, 'tfrecord', dset, option)
+            export.export(
+                db_parsed, out_path, 'tfrecord', dset, option)
+            log.log_cli_cmd(db_parsed, note)
