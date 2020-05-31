@@ -2,9 +2,17 @@
 CLI interface of data warehouse.
 All successful commands are logged in connected DB.
 
+If you want to know function of a command?
+Run command with --help
+----
+If dump help page to stdout, use linux cmd: column.
+ex) $ python main.py generate easy_only --help | column
+----
 The functions defined in this module prepare for 'task'.
 ex) Parsing argument. Reporting error when arg parse fail..
 All other jobs are executed by functions in 'tasks' package.
+----
+comment for dev: Don't forget to edit comments when functions changed!
 '''
 # This module is fire cli spec, therefore
 # you must import modules inside of (command) function!
@@ -101,7 +109,7 @@ class init(object):
                 return f'invalid connection string:\n{connection}'
 
 class add(object):
-    ''' Add something(s) '''
+    ''' Add DATA to db (not dataset! - currently..) '''
     def old_snet(self, root, connection, note=None):
         '''
         Add old snet data(not dataset!) into db.
@@ -145,7 +153,7 @@ class add(object):
             return result
 
 class create(object):
-    ''' Create something(s) '''
+    ''' Create DATASET from DATA in db '''
     def old_snet(self, split_yaml, connection, note=None):
         '''
         Create old snet dataset from old snet data in db(connection)
@@ -181,7 +189,7 @@ class create(object):
             return result
         
 class generate(object):
-    ''' Generate something(s) '''
+    ''' Generate new DATASET from dataset in DB '''
     def easy_only(self, connection, src_dataset, mask_dir_relpath='easy_only', note=None):
         '''
         Create EASY ONLY dataset from src_dataset in db(connection).
@@ -246,12 +254,12 @@ class generate(object):
         generate.generate(db_parsed, dset, 'easy_only', mask_dir_relpath)
 
 class export(object):
-    ''' Export something(s) to something(s) '''
+    ''' Export DATASET(in db) to ARTIFACT(dataset file) '''
     def tfrecord(self, connection, out_path, dataset, option=None):
         ''' 
         Export dataset to tfrecord dataset saved in out_path
         
-        Currently, dataset.name = old_snet, option= rbk or wk.
+        Currently, dataset.name = old_snet, option= rbk or wk or easy_only.
 
         args: 
         connection: string 'id:pw@host:port/dbname' format
