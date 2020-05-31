@@ -255,7 +255,7 @@ class generate(object):
 
 class export(object):
     ''' Export DATASET(in db) to ARTIFACT(dataset file) '''
-    def tfrecord(self, connection, out_path, dataset, option=None):
+    def tfrecord(self, connection, out_path, dataset, option):
         ''' 
         Export dataset to tfrecord dataset saved in out_path
         
