@@ -35,5 +35,6 @@ def log_cli_cmd(connection, description):
     
     db.run(query, *connection)
 
-def get_cli_cmds(connection):
-    return db.get(Table('executed_command').select('*'), *connection)
+def get_cli_cmds(connection, full_table:bool):
+    cols = '*' if full_table else 'command'
+    return db.get(Table('executed_command').select(cols), *connection)

@@ -53,7 +53,7 @@ def REINIT(connection, schema='./dw/schema/szmc_0.1.0.sql', note=None):
     else:
         return ret
 
-def log(connection):
+def log(connection, full_table=False):
     '''
     Print command log of DB. This command will not logged.
    
@@ -65,7 +65,7 @@ def log(connection):
     
     parsed = parse('{}:{}@{}:{}/{}', connection)
     if parsed:
-        print(str(log.get_cli_cmds(parsed).dataset)
+        print(str(log.get_cli_cmds(parsed, full_table).dataset)
               .replace('<connection>', connection))
         return None
     else:
