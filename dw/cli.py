@@ -56,6 +56,9 @@ def REINIT(connection, schema='./dw/schema/szmc_0.1.0.sql', note=None):
 def log(connection):
     '''
     Print command log of DB. This command will not logged.
+   
+    args:
+    connection: string 'id:pw@host:port/dbname' format
     '''
     from parse import parse
     from dw import log
