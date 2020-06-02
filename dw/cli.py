@@ -189,7 +189,8 @@ class create(object):
             return result
         
 class generate(object):
-    ''' Generate new DATASET from dataset in DB '''
+    ''' Generate new DATASET and its annotation from dataset in DB.
+        annotation files could be generated. '''
     def easy_only(self, connection, src_dataset, mask_dir_relpath='easy_only', note=None):
         '''
         Create EASY ONLY dataset from src_dataset in db(connection).
