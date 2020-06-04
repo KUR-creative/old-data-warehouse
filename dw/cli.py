@@ -237,12 +237,13 @@ class create(object):
             return result
         
 class generate(object):
-    ''' Generate new DATASET and its annotation from dataset in DB.
-        annotation files could be generated. '''
+    ''' Generate Something(new DATASET, annotation, ..) from existing data in DB.
+        some(annotation) files could be generated. '''
     def easy_only(self, connection, src_dataset, mask_dir_relpath='easy_only', note=None):
         '''
         Create EASY ONLY dataset from src_dataset in db(connection).
         src_dataset must have rbk scheme data.
+        #TODO: rename easy_only => easy_only_dataset
         
         ----
         It generate and save easy-only mask(red mask from rbk scheme) files. 
