@@ -151,6 +151,54 @@ class add(object):
             return 'Add success'
         else:
             return result
+        
+    def manga109_data(self, root, connection, note=None):
+        '''
+        Add manga109 data(not dataset!) into db.
+        
+        Manga109 consists directory of files.
+        root directory must be satisfy following structure.
+
+        root
+        ├── images
+        │   ├── AisazuNihaIrarenai
+        │   │   ├── AisazuNihaIrarenai_0.jpg
+        │   │   ├── ...
+        │   │   └── AisazuNihaIrarenai_100.jpg
+        │   ├── AkkeraKanjinchou
+        │   ├── ...
+        │   └── YumeNoKayoiji
+        └── manga109-annotations
+            ├── AisazuNihaIrarenai.xml
+            ├── Akuhamu.xml
+            ├── ...
+            └── YumeNoKayoiji.xml
+        
+        name of directories in images and manga109-annotations 
+        must be same in each directories.
+
+        [result]
+        All images and annotation xml files of manga109 are saved in DB.
+        
+        args: 
+        root: root directory path string of old snet dataset. (src)
+        connection: string 'id:pw@host:port/dbname' format. (dst)
+        note: note for running command. it will be logged with command.
+        '''
+        from parse import parse
+        from dw.data_source import manga109
+        from dw import log
+
+        parsed = parse('{}:{}@{}:{}/{}', connection)
+        #result = old_snet.save(root, parsed) if parsed else 'conn_parse_error'
+        result = manga109.save(root, parsed)
+        if parsed == None:
+            return f'invalid connection string:\n{connection}' 
+        elif result == None:
+            #log.log_cli_cmd(parsed, note)
+            return 'Add success'
+        else:
+            return result
 
 class create(object):
     ''' Create DATASET from DATA in db '''
