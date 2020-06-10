@@ -34,9 +34,8 @@ def DROP_ALL(connection, note=None):
     ans = input('Do you really want? [yes/no] \n')
     if ans == 'yes':
         parsed = parse('{}:{}@{}:{}/{}', connection)
-        query = 'DROP SCHEMA public CASCADE; CREATE SCHEMA public;'
         if parsed:
-            db.run(query, *parsed)
+            db.run(db.DROP_ALL_QUERY, *parsed)
             return 'All tables are dropped'
         else:
             return f'invalid connection string:\n{connection}'

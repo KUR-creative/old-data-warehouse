@@ -2,6 +2,8 @@ import psycopg2 as pg
 import records
 from pypika import Query
 
+DROP_ALL_QUERY = 'DROP SCHEMA public CASCADE; CREATE SCHEMA public;'
+
 def init(schema, user, pw, host, port, dbname):
     with pg.connect(user=user, password=pw, host=host, dbname=dbname) as conn:
         with conn.cursor() as cursor:
