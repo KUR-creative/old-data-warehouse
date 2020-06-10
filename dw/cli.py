@@ -143,7 +143,7 @@ class add(object):
         from dw import log
 
         parsed = parse('{}:{}@{}:{}/{}', connection)
-        result = old_snet.save(root, parsed) if parsed else 'conn_parse_error'
+        result = old_snet.add_data(root, parsed) if parsed else 'conn_parse_error'
         if parsed == None:
             return f'invalid connection string:\n{connection}' 
         elif result == None:
@@ -190,8 +190,7 @@ class add(object):
         from dw import log
 
         parsed = parse('{}:{}@{}:{}/{}', connection)
-        #result = old_snet.save(root, parsed) if parsed else 'conn_parse_error'
-        result = manga109.save(root, parsed)
+        result = manga109.add_data(root, parsed)
         if parsed == None:
             return f'invalid connection string:\n{connection}' 
         elif result == None:

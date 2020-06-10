@@ -57,8 +57,8 @@ def is_valid_directory(root):
     
     return True
 
-def save(root, connection):
-    ''' Save old snet dataset(root) to DB(connection) '''
+def add_data(root, connection):
+    ''' Add old snet data to DB(connection) '''
     if not is_valid_directory(root):
         return 'Invalid old snet dataset'
 

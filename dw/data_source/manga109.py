@@ -56,8 +56,9 @@ def is_valid(root):
     
     return True
 
-def save(root, connection):
-    ''' Save Manga109 dataset(root) to DB(connection) '''
+def add_data(root, connection):
+    ''' Add Manga109 data to DB(connection) '''
+    # TODO: Rewrite this
     if not is_valid(root):
         return 'Invalid Manga109 dataset'
 
