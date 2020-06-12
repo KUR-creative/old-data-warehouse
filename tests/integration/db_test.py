@@ -8,7 +8,7 @@ from dw.data_source import old_snet
 from dw import db
 
 
-def test_old_snet_add_data(conn, root, yaml):
+def test_old_snet_easy_only_behavior(conn, root, yaml):
     '''
     If you don't know how to pass args, run `python main.py log <testdb>`
     
@@ -61,3 +61,17 @@ def test_old_snet_add_data(conn, root, yaml):
     assert num_datasets == 1
     num_relations = db.count_rows(Table('dataset_annotation'), *db_parsed)
     assert num_relations == 2 * num_imgs
+
+    #### AND WHEN #################################################
+    # Generate easy_only dataset
+    #--- THEN -----------------------------------------------------
+    # Check properties of DB
+    
+    #### AND WHEN #################################################
+    # Export easy_only dataset
+    # Export old_snet wk dataset
+    # Export old_snet rbk dataset
+    #--- THEN -----------------------------------------------------
+    # Check properties of DB
+    # Check properties of exported datasets
+
