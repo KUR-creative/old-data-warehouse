@@ -85,6 +85,14 @@ def add_data(root, connection):
     abspaths = img_abspaths + rbk_abspaths + wk_abspaths
     relpaths = fp.lmap(relpath, abspaths)
     
+    # Has db 'mask' type?
+    mask = 'mask'
+    tab_annotation_type = Table('annotation_type')
+    new_annotation_type = (db.count_rows(
+        tab_annotation_type, *connection,
+        tab_annotation_type.name == mask
+    ) == 0)
+    
     # Run queries.
     old_snet, rbk, wk = 'old_snet', 'rbk', 'wk'
     query = db.multi_query(
@@ -114,9 +122,12 @@ def add_data(root, connection):
             zip(wk_uuids, F.repeat(wk))
         )),
         # Add annotation relation
-        Table('snet_annotation').insert(*F.concat(
-            zip(img_uuids, rbk_uuids),
-            zip(img_uuids, wk_uuids)
+        tab_annotation_type.insert(
+            (mask, 'image that has same height,width of input')
+        ) if new_annotation_type else '',
+        Table('annotation').insert(*F.concat(
+            zip(img_uuids, rbk_uuids, F.repeat(mask)),
+            zip(img_uuids, wk_uuids, F.repeat(mask)),
         ))
     )
     db.run(query, *connection)
