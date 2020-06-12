@@ -152,18 +152,18 @@ def create(split_yaml, connection):
         ids = yaml.safe_load(f.read())
         
     # Get data from DB
-    snet_annotation = Table('snet_annotation')
+    annotation = Table('annotation')
     file, mask = Table('file'), Table('mask')
     rbk_rows, wk_rows = F.lsplit(
         lambda row: row['scheme'] == 'rbk',
         db.get(
-            Query.from_(snet_annotation)
+            Query.from_(annotation)
                  .from_(mask).from_(file)
-                 .select(snet_annotation.input,
-                         snet_annotation.output,
+                 .select(annotation.input,
+                         annotation.output,
                          file.relpath,
                          mask.scheme)
-                 .where(snet_annotation.output == mask.uuid)
+                 .where(annotation.output == mask.uuid)
                  .where(mask.uuid == file.uuid),
             *connection
         )
