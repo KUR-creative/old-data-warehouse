@@ -1,7 +1,6 @@
 from pathlib import Path
 
 from pypika import Table
-from pypika import functions as fn
 from parse import parse
 import pytest
 
@@ -34,17 +33,9 @@ def test_old_snet_add_data(root, conn):
     # Check properties of DB
     num_imgs = len(list(Path(root, 'image').glob('*')))
     
-    num_files = db.get(
-        Table('file').select(fn.Count('*')), *db_parsed
-    )[0]['count']
+    num_files = db.count_rows(Table('file'), *db_parsed)
     assert num_files == 3 * num_imgs, 'DB has img, wk, rbk images: 3 * num_img'
-    
-    num_masks = db.get(
-        Table('mask').select(fn.Count('*')), *db_parsed
-    )[0]['count']
+    num_masks = db.count_rows(Table('mask'), *db_parsed)
     assert num_masks == 2 * num_imgs, 'DB has wk, rbk masks: 2 * num_img'
-    
-    num_datasets = db.get(
-        Table('dataset').select(fn.Count('*')), *db_parsed
-    )[0]['count']
+    num_datasets = db.count_rows(Table('dataset'), *db_parsed)
     assert num_datasets == 0, 'DB has no dataset now.'

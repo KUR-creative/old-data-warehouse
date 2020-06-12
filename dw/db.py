@@ -1,9 +1,16 @@
 import psycopg2 as pg
 import records
-from pypika import Query
+from pypika import Query, Table
+from pypika import functions as fn
 
 DROP_ALL_QUERY = 'DROP SCHEMA public CASCADE; CREATE SCHEMA public;'
 
+def count_rows(table: Table, user, pw, host, port, dbname, where=None):
+    query =(table.select(fn.Count('*')).where(where) if where
+       else table.select(fn.Count('*')))
+    return get(query, user, pw, host, port, dbname)[0]['count']
+
+#-----------------------------------------------------------------------------
 def init(schema, user, pw, host, port, dbname):
     with pg.connect(user=user, password=pw, host=host, dbname=dbname) as conn:
         with conn.cursor() as cursor:
@@ -34,5 +41,8 @@ def run(query, user, pw, host, port, dbname):
             return cursor.execute(str(query))
 
 def multi_query(*queries):
-    ''' Queries is list<pypika.queries.QueryBuilder> '''
+    ''' 
+    Queries is list<pypika.queries.QueryBuilder> 
+    if query is empty string(''), then it will skip.
+    '''
     return ';'.join(map(str, queries))
