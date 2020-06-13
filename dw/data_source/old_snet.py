@@ -57,8 +57,8 @@ def is_valid_directory(root):
     
     return True
 
-def save(root, connection):
-    ''' Save old snet dataset(root) to DB(connection) '''
+def add_data(root, connection):
+    ''' Add old snet data to DB(connection) '''
     if not is_valid_directory(root):
         return 'Invalid old snet dataset'
 
@@ -84,6 +84,10 @@ def save(root, connection):
     all_uuids = img_uuids + rbk_uuids + wk_uuids
     abspaths = img_abspaths + rbk_abspaths + wk_abspaths
     relpaths = fp.lmap(relpath, abspaths)
+    
+    # Has db 'mask' type?
+    annotation_type = Table('annotation_type')
+    has_mask_type = db.contains(annotation_type, 'name', 'mask', connection)
     
     # Run queries.
     old_snet, rbk, wk = 'old_snet', 'rbk', 'wk'
@@ -114,13 +118,16 @@ def save(root, connection):
             zip(wk_uuids, F.repeat(wk))
         )),
         # Add annotation relation
-        Table('snet_annotation').insert(*F.concat(
-            zip(img_uuids, rbk_uuids),
-            zip(img_uuids, wk_uuids)
+        annotation_type.insert(
+            ('mask', 'image that has same height,width of input')
+        ) if not has_mask_type else '',
+        Table('annotation').insert(*F.concat(
+            zip(img_uuids, rbk_uuids, F.repeat('mask')),
+            zip(img_uuids, wk_uuids, F.repeat('mask')),
         ))
     )
-    db.run(query, *connection)
-
+    db.run(query, connection)
+    
     #TODO: Validation(Fact check).
     # count(image) + count(mask) = count(file)
     # count(rbk) = count(wk)
@@ -141,20 +148,20 @@ def create(split_yaml, connection):
         ids = yaml.safe_load(f.read())
         
     # Get data from DB
-    snet_annotation = Table('snet_annotation')
+    annotation = Table('annotation')
     file, mask = Table('file'), Table('mask')
     rbk_rows, wk_rows = F.lsplit(
         lambda row: row['scheme'] == 'rbk',
         db.get(
-            Query.from_(snet_annotation)
+            Query.from_(annotation)
                  .from_(mask).from_(file)
-                 .select(snet_annotation.input,
-                         snet_annotation.output,
+                 .select(annotation.input,
+                         annotation.output,
                          file.relpath,
                          mask.scheme)
-                 .where(snet_annotation.output == mask.uuid)
+                 .where(annotation.output == mask.uuid)
                  .where(mask.uuid == file.uuid),
-            *connection
+            connection
         )
     )
     
@@ -208,6 +215,6 @@ def create(split_yaml, connection):
         ))
     )
 
-    db.run(query, *connection)
+    db.run(query, connection)
 
     # None means success.

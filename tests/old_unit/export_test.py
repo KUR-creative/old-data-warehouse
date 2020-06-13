@@ -257,7 +257,9 @@ def tmp_dset_testing(expected_dset_path):
 
 def test_export():
     # for pytest
-    tmp_dset_testing('/home/kur/dev/szmc/nn-lab/dataset/snet285wk.tfrecords')
+    #tmp_dset_testing('/home/kur/dev/szmc/nn-lab/dataset/snet285wk.tfrecords')
+    pass
             
 if __name__ == '__main__':
-    tmp_dset_testing('/home/kur/dev/szmc/nn-lab/dataset/snet285wk.tfrecords')
+    pass
+    #tmp_dset_testing('/home/kur/dev/szmc/nn-lab/dataset/snet285wk.tfrecords')

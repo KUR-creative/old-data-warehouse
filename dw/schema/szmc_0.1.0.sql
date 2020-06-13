@@ -49,10 +49,25 @@ CREATE TABLE IF NOT EXISTS mask (
 );
 
 ----------------------------------------------------------------
+/*
 CREATE TABLE IF NOT EXISTS snet_annotation (
     input   UUID    REFERENCES image(uuid),
     output  UUID    REFERENCES mask(uuid)
 );
+*/
+CREATE TABLE IF NOT EXISTS annotation_type (
+    name           TEXT   PRIMARY KEY,
+    description    TEXT   NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS annotation (
+    input   UUID    REFERENCES image(uuid),
+    output  UUID    NOT NULL,
+    type    TEXT    REFERENCES annotation_type(name)
+);
+
+COMMENT ON COLUMN annotation.output
+IS 'output could be mask, file, or just integer...';
 
 CREATE TABLE IF NOT EXISTS dataset (
     name           TEXT,

@@ -2,16 +2,16 @@
 Logics for Manga109 dataset
 
 Manga109 dataset is directory of files.
-root direcory must be satisfy following structure.
+root directory must be satisfy following structure.
 
 root
 ├── images
-│   ├── AisazuNihaIrarenai
+│   ├── AisazuNihaIrarenai
 │   │   ├── AisazuNihaIrarenai_0.jpg
 │   │   ├── ...
 │   │   └── AisazuNihaIrarenai_100.jpg
-│   ├── AkkeraKanjinchou
-│   ├── ...
+│   ├── AkkeraKanjinchou
+│   ├── ...
 │   └── YumeNoKayoiji
 └── manga109-annotations
     ├── AisazuNihaIrarenai.xml
@@ -56,11 +56,13 @@ def is_valid(root):
     
     return True
 
-def save(root, connection):
-    ''' Save Manga109 dataset(root) to DB(connection) '''
+def add_data(root, connection):
+    ''' Add Manga109 data to DB(connection) '''
+    # TODO: Rewrite this
     if not is_valid(root):
         return 'Invalid Manga109 dataset'
 
+    return None
     # Get images (path, title, no).
     relpath = F.partial(os.path.relpath, start=root)
     sorted_children = fp.pipe(fu.children, fu.human_sorted)
@@ -97,6 +99,6 @@ def save(root, connection):
         Table('raw_table_root').insert(
             tab_name, root)
     )
-    db.run(query, *connection)
+    db.run(query, connection)
     
     # None means success.
