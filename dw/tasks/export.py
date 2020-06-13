@@ -48,8 +48,10 @@ def export_old_snet(connection, out_path, dset, mask_scheme):
                  (file_out.uuid == dataset_annotation.output) &
                  (mask.scheme == mask_scheme)
              ),
-        *connection
+        connection
     )
+    print(connection)
+    print(raw_rows)
     rows = F.lmap(
         fp.tup(lambda in_path, out_path, usage:
             dict(img=in_path, mask=out_path, usage=usage)),
@@ -71,7 +73,7 @@ def export_old_snet(connection, out_path, dset, mask_scheme):
     } if mask_scheme == 'rbk' else {
         (255,255,255):(1,0), (0,0,0):(0,1)
     } if mask_scheme == 'wk' or mask_scheme == 'easy_only' else None
-    
+
     generate(train_pairs, valid_pairs, test_pairs,
              src_dst_colormap, out_path)
 

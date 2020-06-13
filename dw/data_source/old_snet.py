@@ -87,7 +87,7 @@ def add_data(root, connection):
     
     # Has db 'mask' type?
     annotation_type = Table('annotation_type')
-    has_mask_type = db.contains(annotation_type, 'name', 'mask', *connection)
+    has_mask_type = db.contains(annotation_type, 'name', 'mask', connection)
     
     # Run queries.
     old_snet, rbk, wk = 'old_snet', 'rbk', 'wk'
@@ -126,7 +126,7 @@ def add_data(root, connection):
             zip(img_uuids, wk_uuids, F.repeat('mask')),
         ))
     )
-    db.run(query, *connection)
+    db.run(query, connection)
     
     #TODO: Validation(Fact check).
     # count(image) + count(mask) = count(file)
@@ -161,7 +161,7 @@ def create(split_yaml, connection):
                          mask.scheme)
                  .where(annotation.output == mask.uuid)
                  .where(mask.uuid == file.uuid),
-            *connection
+            connection
         )
     )
     
@@ -215,6 +215,6 @@ def create(split_yaml, connection):
         ))
     )
 
-    db.run(query, *connection)
+    db.run(query, connection)
 
     # None means success.

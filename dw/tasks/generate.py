@@ -38,7 +38,7 @@ def generate_snet_easy(connection, src_dataset, out_form, mask_dir_relpath):
         Table('dataset')
             .select('train', 'valid', 'test')
             .orderby('train', 'valid', 'test', order=Order.desc),
-        *connection
+        connection
     )[0].as_dict()
 
     # Get root path of file source of biggest dataset
@@ -47,7 +47,7 @@ def generate_snet_easy(connection, src_dataset, out_form, mask_dir_relpath):
         file_source
             .select('root_path')
             .where(file_source.name == src_dataset.name),
-        *connection
+        connection
     )[0]['root_path']
     
     # Get mask paths of 'rbk' dataset
@@ -72,7 +72,7 @@ def generate_snet_easy(connection, src_dataset, out_form, mask_dir_relpath):
                  (dataset_annotation.output == mask_file.uuid) &
                  (dataset_annotation.output == mask_row.uuid) &
                  (mask_row.scheme == 'rbk')),
-        *connection)
+        connection)
 
     #-----------------------------------------------------------------------
     # 2. Generate target data from 1.data
@@ -115,7 +115,7 @@ def generate_snet_easy(connection, src_dataset, out_form, mask_dir_relpath):
     easy_only = 'easy_only'
     mask_scheme = Table('mask_scheme')
     has_easy_only_scheme = db.contains(
-        mask_scheme, 'name', easy_only, *connection)
+        mask_scheme, 'name', easy_only, connection)
     
     # If not, add new mask scheme: easy_only
     if not has_easy_only_scheme:
@@ -126,7 +126,7 @@ def generate_snet_easy(connection, src_dataset, out_form, mask_dir_relpath):
                 (easy_only, '#FFFFFF', 'text'),
                 (easy_only, '#000000', 'background')), 
         )
-        db.run(query, *connection)
+        db.run(query, connection)
 
     # Save generated mask files, mask, annotation, dataset_annotation
     # This procedure similar to 'add' command, but image source is implicit.
@@ -169,8 +169,7 @@ def generate_snet_easy(connection, src_dataset, out_form, mask_dir_relpath):
     )
     
     db.run(db.multi_query(
-        insert_masks_query,
-        insert_dataset_query
-    ), *connection)
+        insert_masks_query, insert_dataset_query
+    ), connection)
 
     return str(mask_dirpath)

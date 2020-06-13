@@ -99,6 +99,6 @@ def add_data(root, connection):
         Table('raw_table_root').insert(
             tab_name, root)
     )
-    db.run(query, *connection)
+    db.run(query, connection)
     
     # None means success.

@@ -24,11 +24,12 @@ def test_program_behavior(conn, root, yaml):
         root: root directory path string of old snet dataset. (src)
         yaml: file path of train/valid/split specified yaml (legacy)
     '''
+    conn_str = conn
     #### GIVEN #####################################################
-    if not conn:
+    if not conn_str:
         pytest.skip('this tests old_snet.add_data(root, conn, yaml)')
-    db_parsed = parse('{}:{}@{}:{}/{}', conn) # TODO: check integrity of connection string(with refactoring cli)
-    if not db_parsed:
+    conn = db.connection(conn_str)
+    if not conn:
         assert False, f'Invalid connection string:\n{conn}'
     if root is None or (not Path(root).exists()):
         assert False, f'Invalid root: {root}'
@@ -36,37 +37,37 @@ def test_program_behavior(conn, root, yaml):
         assert False, f'Yaml file not exists: {yaml}'
 
     # Reinit
-    db.run(db.DROP_ALL_QUERY, *db_parsed)
+    db.run(db.DROP_ALL_QUERY, conn)
     schema = './dw/schema/szmc_0.1.0.sql' # TODO: use latest schema file finder(#39)
     with open(schema, 'r') as s:
-        db.init(s.read(), *db_parsed)
+        db.init(s.read(), conn)
         
     #### WHEN #####################################################
     # Add old_snet data
-    result = old_snet.add_data(root, db_parsed)
+    result = old_snet.add_data(root, conn)
     assert result is None
 
     #--- THEN -----------------------------------------------------
     # Check properties of DB
     num_imgs = len(list(Path(root, 'image').glob('*')))
     
-    num_files = db.count_rows(Table('file'), *db_parsed)
+    num_files = db.count_rows(Table('file'), conn)
     assert num_files == 3 * num_imgs, 'DB has img, wk, rbk images: 3 * num_img'
-    num_masks = db.count_rows(Table('mask'), *db_parsed)
+    num_masks = db.count_rows(Table('mask'), conn)
     assert num_masks == 2 * num_imgs, 'DB has wk, rbk masks: 2 * num_img'
-    num_datasets = db.count_rows(Table('dataset'), *db_parsed)
+    num_datasets = db.count_rows(Table('dataset'), conn)
     assert num_datasets == 0, 'DB has no dataset now.'
     
     #### AND WHEN #################################################
     # Create old_snet dataset
-    result = old_snet.create(yaml, db_parsed)
+    result = old_snet.create(yaml, conn)
     assert result is None
     
     #--- THEN -----------------------------------------------------
     # Check properties of DB
-    num_datasets = db.count_rows(Table('dataset'), *db_parsed)
+    num_datasets = db.count_rows(Table('dataset'), conn)
     assert num_datasets == 1
-    num_relations = db.count_rows(Table('dataset_annotation'), *db_parsed)
+    num_relations = db.count_rows(Table('dataset_annotation'), conn)
     assert num_relations == 2 * num_imgs
 
     #### AND WHEN #################################################
@@ -74,7 +75,7 @@ def test_program_behavior(conn, root, yaml):
     dset = common.Dataset('old_snet', 'full')
     mask_dir_relpath = 'easy_only' #'tmp_dirpath' - IT SUCKS!!!!!
     mask_dir_abspath = generate.generate(
-        db_parsed, dset, 'easy_only', mask_dir_relpath)
+        conn, dset, 'easy_only', mask_dir_relpath)
     #--- THEN -----------------------------------------------------
     # It just check validity of code after schema change..
     # So no crash = success. Too many tests are not effective.

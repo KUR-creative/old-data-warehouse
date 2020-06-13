@@ -33,9 +33,9 @@ def DROP_ALL(connection, note=None):
     print('This command DROP ALL of tables in DB.')
     ans = input('Do you really want? [yes/no] \n')
     if ans == 'yes':
-        parsed = parse('{}:{}@{}:{}/{}', connection)
-        if parsed:
-            db.run(db.DROP_ALL_QUERY, *parsed)
+        conn = db.connection(connection)
+        if conn:
+            db.run(db.DROP_ALL_QUERY, conn)
             return 'All tables are dropped'
         else:
             return f'invalid connection string:\n{connection}'
@@ -69,10 +69,11 @@ def log(connection, full_table=False):
     '''
     from parse import parse
     from dw import log
+    from dw import db
     
-    parsed = parse('{}:{}@{}:{}/{}', connection)
-    if parsed:
-        print(str(log.get_cli_cmds(parsed, full_table).dataset)
+    conn = db.connection(connection)
+    if conn:
+        print(str(log.get_cli_cmds(conn, full_table).dataset)
               .replace('<connection>', connection))
         return None
     else:
@@ -98,11 +99,11 @@ class init(object):
         from dw import db
         from dw import log
         
-        parsed = parse('{}:{}@{}:{}/{}', connection)
+        conn = db.connection(connection)
         with open(schema, 'r') as s:
-            if parsed:
-                ret = db.init(s.read(), *parsed)
-                log.log_cli_cmd(parsed, note) # must be called after init!
+            if conn:
+                ret = db.init(s.read(), conn)
+                log.log_cli_cmd(conn, note) # must be called after init!
                 return ret
             else:
                 return f'invalid connection string:\n{connection}'
@@ -139,14 +140,15 @@ class add(object):
         '''
         from parse import parse
         from dw.data_source import old_snet
+        from dw import db
         from dw import log
 
-        parsed = parse('{}:{}@{}:{}/{}', connection)
-        result = old_snet.add_data(root, parsed) if parsed else 'conn_parse_error'
-        if parsed == None:
+        conn = db.connection(connection)
+        result = old_snet.add_data(root, conn) if conn else 'conn_parse_error'
+        if conn is None:
             return f'invalid connection string:\n{connection}' 
-        elif result == None:
-            log.log_cli_cmd(parsed, note)
+        elif result is None:
+            log.log_cli_cmd(conn, note)
             return 'Add success'
         else:
             return result
@@ -186,14 +188,15 @@ class add(object):
         '''
         from parse import parse
         from dw.data_source import manga109
+        from dw import db
         from dw import log
 
-        parsed = parse('{}:{}@{}:{}/{}', connection)
-        result = manga109.add_data(root, parsed)
-        if parsed == None:
+        conn = db.connection(connection)
+        result = manga109.add_data(root, conn)
+        if conn is None:
             return f'invalid connection string:\n{connection}' 
-        elif result == None:
-            #log.log_cli_cmd(parsed, note)
+        elif result is None:
+            #log.log_cli_cmd(conn, note)
             return 'Add success'
         else:
             return result
@@ -222,14 +225,15 @@ class create(object):
         '''
         from parse import parse
         from dw.data_source import old_snet
+        from dw import db
         from dw import log
 
-        parsed = parse('{}:{}@{}:{}/{}', connection)
-        result = old_snet.create(split_yaml, parsed) if parsed else 'conn_parse_error'
-        if parsed == None:
+        conn = db.connection(connection)
+        result = old_snet.create(split_yaml, conn) if conn else 'conn_parse_error'
+        if conn is None:
             return f'invalid connection string:\n{connection}' 
-        elif result == None:
-            log.log_cli_cmd(parsed, note)
+        elif result is None:
+            log.log_cli_cmd(conn, note)
             return 'Create success'
         else:
             return result
@@ -281,8 +285,8 @@ class generate(object):
         from dw import common
 
         # connection, src_dataset, mask_dir_relpath, note=None
-        db_parsed = parse('{}:{}@{}:{}/{}', connection)
-        if not db_parsed:
+        conn = db.connection(connection)
+        if not conn:
             return f'Invalid connection string:\n{connection}'
         
         dset_parsed = parse('{}.{}', src_dataset)
@@ -299,7 +303,7 @@ class generate(object):
 
         # Didn't check mask_dir_relpath validity. But maybe it's okay..
                 
-        generate.generate(db_parsed, dset, 'easy_only', mask_dir_relpath)
+        generate.generate(conn, dset, 'easy_only', mask_dir_relpath)
 
 class export(object):
     ''' Export DATASET(in db) to ARTIFACT(dataset file) '''
@@ -320,10 +324,11 @@ class export(object):
         from dw.tasks import export
         from dw import common
         from dw import log
+        from dw import db
         from parse import parse
         
-        db_parsed = parse('{}:{}@{}:{}/{}', connection)
-        if not db_parsed:
+        conn = db.connection(connection)
+        if not conn:
             return f'Invalid connection string:\n{connection}'
         
         dset_parsed = parse('{}.{}', dataset)
@@ -339,5 +344,5 @@ class export(object):
                 dset = common.Dataset(name, split)
                 
             export.export(
-                db_parsed, out_path, 'tfrecord', dset, option)
-            log.log_cli_cmd(db_parsed, note)
+                conn, out_path, 'tfrecord', dset, option)
+            log.log_cli_cmd(conn, note)
