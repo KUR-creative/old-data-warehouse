@@ -114,10 +114,8 @@ def generate_snet_easy(connection, src_dataset, out_form, mask_dir_relpath):
     # Has db easy only scheme?
     easy_only = 'easy_only'
     mask_scheme = Table('mask_scheme')
-    has_easy_only_scheme = db.get(
-        mask_scheme.select('*').where(mask_scheme.name == easy_only),
-        *connection
-    ).as_dict()
+    has_easy_only_scheme = db.contains(
+        mask_scheme, 'name', easy_only, *connection)
     
     # If not, add new mask scheme: easy_only
     if not has_easy_only_scheme:

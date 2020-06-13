@@ -86,12 +86,8 @@ def add_data(root, connection):
     relpaths = fp.lmap(relpath, abspaths)
     
     # Has db 'mask' type?
-    mask = 'mask'
-    tab_annotation_type = Table('annotation_type')
-    new_annotation_type = (db.count_rows(
-        tab_annotation_type, *connection,
-        tab_annotation_type.name == mask
-    ) == 0)
+    annotation_type = Table('annotation_type')
+    has_mask_type = db.contains(annotation_type, 'name', 'mask', *connection)
     
     # Run queries.
     old_snet, rbk, wk = 'old_snet', 'rbk', 'wk'
@@ -122,16 +118,16 @@ def add_data(root, connection):
             zip(wk_uuids, F.repeat(wk))
         )),
         # Add annotation relation
-        tab_annotation_type.insert(
-            (mask, 'image that has same height,width of input')
-        ) if new_annotation_type else '',
+        annotation_type.insert(
+            ('mask', 'image that has same height,width of input')
+        ) if not has_mask_type else '',
         Table('annotation').insert(*F.concat(
-            zip(img_uuids, rbk_uuids, F.repeat(mask)),
-            zip(img_uuids, wk_uuids, F.repeat(mask)),
+            zip(img_uuids, rbk_uuids, F.repeat('mask')),
+            zip(img_uuids, wk_uuids, F.repeat('mask')),
         ))
     )
     db.run(query, *connection)
-
+    
     #TODO: Validation(Fact check).
     # count(image) + count(mask) = count(file)
     # count(rbk) = count(wk)
