@@ -1,4 +1,9 @@
+'''
+behavior test for old_snet.
+This test is written to cope with DB schema changing.
+'''
 from pathlib import Path
+import shutil
 
 from pypika import Table
 from parse import parse
@@ -6,9 +11,11 @@ import pytest
 
 from dw.data_source import old_snet
 from dw import db
+from dw import common
+from dw.tasks import generate
 
 
-def test_old_snet_easy_only_behavior(conn, root, yaml):
+def test_program_behavior(conn, root, yaml):
     '''
     If you don't know how to pass args, run `python main.py log <testdb>`
     
@@ -64,8 +71,16 @@ def test_old_snet_easy_only_behavior(conn, root, yaml):
 
     #### AND WHEN #################################################
     # Generate easy_only dataset
+    dset = common.Dataset('old_snet', 'full')
+    mask_dir_relpath = 'easy_only' #'tmp_dirpath' - IT SUCKS!!!!!
+    mask_dir_abspath = generate.generate(
+        db_parsed, dset, 'easy_only', mask_dir_relpath)
     #--- THEN -----------------------------------------------------
-    # Check properties of DB
+    # It just check validity of code after schema change..
+    # So no crash = success. Too many tests are not effective.
+    # NOTE: In future more test could be needed.. but NOT now!
+    assert num_imgs == len(list(Path(mask_dir_abspath).glob('*')))
+    shutil.rmtree(mask_dir_abspath)
     
     #### AND WHEN #################################################
     # Export easy_only dataset
@@ -74,4 +89,3 @@ def test_old_snet_easy_only_behavior(conn, root, yaml):
     #--- THEN -----------------------------------------------------
     # Check properties of DB
     # Check properties of exported datasets
-

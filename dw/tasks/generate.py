@@ -18,7 +18,7 @@ def generate(connection, src_dataset, out_form, option):
 @fp.mmethod(generate, (common.Dataset('old_snet', 'full'), 'easy_only', 'easy_only'))
 def generate(connection, src_dataset, out_form, option):
     ''' train / valid / test not specified: means getting biggest dataset '''
-    generate_snet_easy(connection, src_dataset, out_form, option)
+    return generate_snet_easy(connection, src_dataset, out_form, option)
 
 def generate_snet_easy(connection, src_dataset, out_form, mask_dir_relpath):
     '''
@@ -26,6 +26,8 @@ def generate_snet_easy(connection, src_dataset, out_form, mask_dir_relpath):
     1. Get data from Db.
     2. Generate target data from 1.data.
     3. save Generated data to file system and DB.
+    
+    return: path of directory that contains easy-only mask files
     '''
     #-----------------------------------------------------------------------
     # 1. Get data from Db
@@ -101,7 +103,8 @@ def generate_snet_easy(connection, src_dataset, out_form, mask_dir_relpath):
     # 3. save Generated data
     #-----------------------------------------------------------------------
     # Save easy only masks to destination paths
-    os.makedirs(Path(root, mask_dir_relpath), exist_ok=True)
+    mask_dirpath = Path(root, mask_dir_relpath)
+    os.makedirs(mask_dirpath, exist_ok=True)
     print('Generate & Save easy text only masks...')
     for mask, dstpath in tqdm(zip(red_maskseq, abspaths), total=len(abspaths)):
         #cv2.imshow('mask',mask); cv2.waitKey(0) # look & feel check
@@ -127,7 +130,7 @@ def generate_snet_easy(connection, src_dataset, out_form, mask_dir_relpath):
         )
         db.run(query, *connection)
 
-    # Save generated mask files, mask, snet_annotation, dataset_annotation
+    # Save generated mask files, mask, annotation, dataset_annotation
     # This procedure similar to 'add' command, but image source is implicit.
     img_uuids = fp.lmap(lambda r: str(r.input), rows)
     mask_uuids = etc.uuid4strs(len(abspaths))
@@ -140,8 +143,8 @@ def generate_snet_easy(connection, src_dataset, out_form, mask_dir_relpath):
         Table('mask').insert(*zip(
             mask_uuids, F.repeat(easy_only)
         )),
-        Table('snet_annotation').insert(*zip(
-            img_uuids, mask_uuids
+        Table('annotation').insert(*zip(
+            img_uuids, mask_uuids, F.repeat('mask')
         ))
     )
     
@@ -171,3 +174,5 @@ def generate_snet_easy(connection, src_dataset, out_form, mask_dir_relpath):
         insert_masks_query,
         insert_dataset_query
     ), *connection)
+
+    return str(mask_dirpath)
