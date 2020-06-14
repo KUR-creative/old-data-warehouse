@@ -17,6 +17,7 @@ Use DATA1 (MyPassport) as data lake
 #### integration test
 `pytest tests/integration --conn id:pw@host:port/testdb` \
 `pytest tests/integration --conn id:pw@host:port/testdb --root path/to/old_snet/dir --yaml path/to/yaml`
+`pytest tests/integration --conn $db --root $root --yaml $yaml`
 
 #### mypy
 `mypy`

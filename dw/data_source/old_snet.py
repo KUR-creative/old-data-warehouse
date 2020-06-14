@@ -17,6 +17,8 @@ import yaml
 from dw.utils import file_utils as fu
 from dw.utils import fp, etc
 from dw import db
+from dw.schema.schema import Tables as T, Columns as C
+
 
 def is_valid_directory(root):
     root_dir = Path(root)

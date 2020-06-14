@@ -110,7 +110,6 @@ def modify(schema_dic, py_path=Path(__file__).absolute()):
         len(col_lines) == len(new_col_lines))
     
     if tab_same and col_same:
-        print('No change!')
         return
     
     new_code = '\n'.join(
@@ -124,6 +123,8 @@ def modify(schema_dic, py_path=Path(__file__).absolute()):
 
     with open(py_path, 'w') as f:
         f.write(new_code)
+
+    print('dw/schema/schema.py updated!')
         
             
 modify(schema_dic(latest()))
