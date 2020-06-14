@@ -17,13 +17,13 @@ from dw import db
 def export(connection, out_path, out_form, dataset, option=None):
     return out_form, dataset, option
 
-@fp.mmethod(export, ('tfrecord', common.Dataset('old_snet', 'full'), 'rbk'))
+@fp.mmethod(export, ('tfrecord', common.Dataset('old_snet', 'full'), 'rbk')) # type: ignore[no-redef]
 def export(connection, out_path, out_form, dataset, option):
     export_old_snet(connection, out_path, dataset, option)
-@fp.mmethod(export, ('tfrecord', common.Dataset('old_snet', 'full'), 'wk'))
+@fp.mmethod(export, ('tfrecord', common.Dataset('old_snet', 'full'), 'wk')) # type: ignore[no-redef]
 def export(connection, out_path, out_form, dataset, option):
     export_old_snet(connection, out_path, dataset, option)
-@fp.mmethod(export, ('tfrecord', common.Dataset('old_snet', 'easy_only'), 'easy_only'))
+@fp.mmethod(export, ('tfrecord', common.Dataset('old_snet', 'easy_only'), 'easy_only')) # type: ignore[no-redef]
 def export(connection, out_path, out_form, dataset, option):
     export_old_snet(connection, out_path, dataset, option)
     

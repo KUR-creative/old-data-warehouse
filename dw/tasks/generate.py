@@ -15,8 +15,8 @@ from dw import db
 def generate(connection, src_dataset, out_form, option):
     return src_dataset, out_form, option
 
-@fp.mmethod(generate, (common.Dataset('old_snet', 'full'), 'easy_only', 'easy_only'))
-def generate(connection, src_dataset, out_form, option):
+@fp.mmethod(generate, (common.Dataset('old_snet', 'full'), 'easy_only', 'easy_only')) # type: ignore[no-redef]
+def generate(connection, src_dataset, out_form, option): 
     ''' train / valid / test not specified: means getting biggest dataset '''
     return generate_snet_easy(connection, src_dataset, out_form, option)
 
