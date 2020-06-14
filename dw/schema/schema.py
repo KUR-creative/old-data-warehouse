@@ -22,7 +22,7 @@ def latest(dbname=None):
     return 'dw/schema/szmc_0.1.0.sql'
 
 def schema_dic(sql_path):
-    ''' Generate Entity and Attribute from sql file. '''
+    ''' Generate Tables and Columns from sql file. '''
     with open(sql_path, 'r') as f:
         sql = f.read()
     
@@ -83,125 +83,77 @@ def columns_string(schema_dic):
     ])
     
 def lines_parts(code_lines):
-    top, _tab_, mid, _col_, bottom = F.lpartition_by(
-        lambda line: {TABLES_LINE:0, COLUMNS_LINE:1}.get(line),
+    gen_lines,_, tab_lines,_, col_lines, *_ = F.lpartition_by(
+        lambda line: {
+            TABLES_LINE:0, COLUMNS_LINE:1, END_LINE:2
+        }.get(line),
         code_lines
     )
-    upto_tab_ = top + _tab_
-    upto_col_ = mid + _col_
-    
-    '''
-    '''
-    print('################## top #######################')
-    for line in top:
-        print(repr(line))
-    print('################## _tab_ #######################')
-    for line in _tab_:
-        print(repr(line))
-    print('################## MID #######################')
-    for line in mid:
-        print(repr(line))
-    print('################## _col_ #####################')
-    for line in _col_:
-        print(repr(line))
-    print('################## bottom #####################')
-    for line in bottom:
-        print(repr(line))
+    return gen_lines, tab_lines, col_lines
 
-    return upto_tab_, upto_col_, bottom
-
-def old_tab_col_lines(upto_col_lines, bottom_lines):
-    old_tab_lines,_ = F.lsplit_by(
-        lambda line: line != END_LINE, upto_col_lines)
-    old_col_lines,_ = F.lsplit_by(
-        lambda line: line != END_LINE, bottom_lines)
-    return old_tab_lines, old_col_lines
-    
 def modify(schema_dic, py_path=Path(__file__).absolute()):
     ''' CAUTION: Modifies THIS file if latest schema is changed! '''
     with open(py_path, 'r') as f:
         old_code = f.read()
         code_lines = old_code.split('\n')
-    tab_lines = tables_string(schema_dic).split('\n')
-    col_lines = columns_string(schema_dic).split('\n')
+        
+    new_tab_lines = tables_string(schema_dic).split('\n')
+    new_col_lines = columns_string(schema_dic).split('\n')
 
-    upto_tab_, upto_col_, bottom = lines_parts(code_lines)
-    old_tab_lines, old_col_lines = old_tab_col_lines(
-        upto_col_, bottom)
+    gen_lines, tab_lines, col_lines = lines_parts(code_lines)
     
     tab_same = (
-        all(map(fp.equal, old_tab_lines, tab_lines)) and
-        len(old_tab_lines) == len(tab_lines))
+        all(map(fp.equal, tab_lines, new_tab_lines)) and
+        len(tab_lines) == len(new_tab_lines))
     col_same = (
-        all(map(fp.equal, old_col_lines, col_lines)) and
-        len(old_col_lines) == len(col_lines))
+        all(map(fp.equal, col_lines, new_col_lines)) and
+        len(col_lines) == len(new_col_lines))
     
     if tab_same and col_same:
         print('No change!')
-        #return None
+        return
     
     new_code = '\n'.join(
-        upto_tab_ +    # ------- TAB -------
-        (old_tab_lines if tab_same else tab_lines) +
-        [END_LINE] +     # -------------------
+        gen_lines +    
+        [TABLES_LINE] +  # ------- TAB -------
+        (tab_lines if tab_same else new_tab_lines) +
         [COLUMNS_LINE] + # ------- COL -------
-        (old_col_lines if col_same else col_lines) +
-        [END_LINE]
+        (col_lines if col_same else new_col_lines) +
+        [END_LINE]       # -------------------
     )
 
     with open(py_path, 'w') as f:
         f.write(new_code)
-
-    '''
-    #new_code = schema_added_code(code_lines, tab_lines, col_lines)
-    print('###########_upto_tab_###################################')
-    for line in upto_tab_:
-        print(repr(line))
-    print('########### upto_col ###################################')
-    for line in upto_col_:
-        print(repr(line))
-    print('############# bottom #################################')
-    for line in bottom:
-        print(repr(line))
-    print('##############################################')
-    print('##############################################')
-    for line in old_tab_lines:
-        print(repr(line))
-    print('##############################################')
-    print('##############################################')
-    for line in old_col_lines:
-        print(repr(line))
-    print('##############################################')
-    print('##############################################')
-
-    
-    if old_code != new_code:
-        with open(py_path, 'w') as f:
-            f.write(new_code)
-    else:
-        print('no change!')
-
-    '''
-    #print(new_code)
+        
             
 modify(schema_dic(latest()))
 
+
 '''
-When this module imported, generate Entity and Attribute 
+ [NOTE]
+
+When this module imported, generate Tables and Columns
 if latest schema file changed.
 
-Generated Entity/Attribute class code is written between comment.
+Generated Tables/Columns class code is written between comment.
 
-# ----- Entity/Attribute ------
-class Entity:                  
-    class a_table_name:        <- here
+# ---------- Tables -----------
+class Tables:                  
+    a_table_name = ...       <- here
+        ...
+# ---------- Columns ----------
+class Columns:                  
+    class a_col_name:        <- and here
         ...
 # -----------------------------
 
 It is necessary to check the change of the automatically
 generated code to detect the latest schema change.
 
-So DO NOT MANUALLY MODIFY AFTER THIS LINE! '''
+
+So DO NOT MANUALLY MODIFY AFTER THIS LINE! 
+'''
+
 
 from pypika import Table
 
@@ -219,7 +171,6 @@ class Tables:
     dataset             = Table('dataset')
     dataset_annotation  = Table('dataset_annotation')
     image_metadata      = Table('image_metadata')
-# --------------------------------------------------------------
 # --------------------------- Columns --------------------------
 class Columns:
     class executed_command:
