@@ -20,4 +20,4 @@ Use DATA1 (MyPassport) as data lake
 `pytest tests/integration --conn $db --root $root --yaml $yaml`
 
 #### mypy
-`mypy`
+`mypy --show-error-code`

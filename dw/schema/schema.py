@@ -2,10 +2,20 @@
 Schema constraints for mypy static type checking.
 
 CAUTION: IT CAN MODIFIES ITSELF WHEN IMPORTED!
-
 It is very hacky solution for DB schema constraints...
+
+If you want some functions to be statically checked,
+
+ 1) Import Tables, Columns, Any.
+from dw.schema.schema import Tables as T, Columns as C, Any
+ 2) Set return type as Any 
+def fn_to_type_check(..) -> Any:
+ 3) run mypy
+$ mypy
 '''
 from pathlib import Path
+from typing import Any as _Any
+Any = _Any # Needed to indicate the type checking enabled function
 
 from pglast import parse_sql
 import funcy as F
