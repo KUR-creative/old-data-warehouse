@@ -12,8 +12,6 @@ $ python main.py mypy  # Run with updating schema.py
 '''
 
 from pypika import Table
-from typing import Any
-#`Any` Needed to indicate the type checking enabled functions
 
 class executed_command:
     _           = Table('executed_command')
