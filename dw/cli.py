@@ -86,8 +86,10 @@ def tmp_tfrecord_test(tfrecord_path='/home/kur/dev/szmc/nn-lab/dataset/snet285wk
     
 def mypy():
     ''' Run mypy after generating latest dw/schema/schema.py. '''
-    from dw.schema.schema import Tables as T, Columns as C
+    from dw.schema import gen_schema
     import os
+
+    gen_schema.generate()
     os.system('mypy')
     
 class init(object):
