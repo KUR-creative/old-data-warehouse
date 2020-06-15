@@ -10,14 +10,14 @@ from pathlib import Path
 import json
 
 import funcy as F
-from pypika import Table, Query
+from pypika import Query
 import yaml
 #from pypika import functions as fn
 
 from dw.utils import file_utils as fu
 from dw.utils import fp, etc
 from dw import db
-from dw.schema.schema import Tables as T, Columns as C, Any
+from dw.schema import schema as S, Any
 
 
 def is_valid_directory(root):
@@ -88,35 +88,35 @@ def add_data(root, connection) -> Any:
     relpaths = fp.lmap(relpath, abspaths)
     
     # Has db 'mask' type?
-    annotation_type = T.annotation_type
+    annotation_type = S.annotation_type._
     has_mask_type = db.contains(annotation_type, 'name', 'mask', connection)
     
     # Run queries.
     uuid, source, relpath, abspath = (
-        C.file.uuid, C.file.source, C.file.relpath, C.file.abspath)
+        S.file.uuid, S.file.source, S.file.relpath, S.file.abspath)
     query = db.multi_query(
-        T.file_source.insert(
+        S.file_source._.insert(
             'old_snet', str(root_dir), etc.host_ip()),
-        Query.into(T.file)
+        Query.into(S.file._)
             .columns(uuid, source, relpath, abspath)
             .insert(*zip(
                 all_uuids, F.repeat('old_snet'),
                 relpaths, abspaths
             )),
         # Add images
-        T.image.insert(
+        S.image._.insert(
             *fp.map(lambda x: (x,), img_uuids)),
         # Add masks
-        T.mask_scheme.insert(
+        S.mask_scheme._.insert(
             ('rbk', 'red, blue, black 3 class dataset'),
             ( 'wk', 'white, black 2 class dataset')),
-        T.mask_scheme_content.insert(
+        S.mask_scheme_content._.insert(
             ('rbk', '#FF0000', 'easy text'), 
             ('rbk', '#0000FF', 'hard text'), 
             ('rbk', '#000000', 'background'),
             ( 'wk', '#FFFFFF', 'text'), 
             ( 'wk', '#000000', 'background')), 
-        T.mask.insert(*F.concat(
+        S.mask._.insert(*F.concat(
             zip(rbk_uuids, F.repeat('rbk')),
             zip(wk_uuids, F.repeat('wk'))
         )),
@@ -124,7 +124,7 @@ def add_data(root, connection) -> Any:
         annotation_type.insert(
             ('mask', 'image that has same height,width of input')
         ) if not has_mask_type else '',
-        T.annotation.insert(*F.concat(
+        S.annotation._.insert(*F.concat(
             zip(img_uuids, rbk_uuids, F.repeat('mask')),
             zip(img_uuids, wk_uuids, F.repeat('mask')),
         ))
@@ -154,14 +154,14 @@ def create(split_yaml, connection) -> Any:
     rbk_rows, wk_rows = F.lsplit(
         lambda row: row['scheme'] == 'rbk',
         db.get(
-            Query.from_(T.annotation)
-                 .from_(T.mask).from_(T.file)
-                 .select(C.annotation.input,
-                         C.annotation.output,
-                         C.file.relpath,
-                         C.mask.scheme)
-                 .where(C.annotation.output == C.mask.uuid)
-                 .where(C.mask.uuid == C.file.uuid),
+            Query.from_(S.annotation._)
+                 .from_(S.mask._).from_(S.file._)
+                 .select(S.annotation.input,
+                         S.annotation.output,
+                         S.file.relpath,
+                         S.mask.scheme)
+                 .where(S.annotation.output == S.mask.uuid)
+                 .where(S.mask.uuid == S.file.uuid),
             connection
         )
     )
@@ -202,10 +202,10 @@ def create(split_yaml, connection) -> Any:
       + 'rbk / wk 데이터를 가지고 있음. split=full은 easy, hard '
       + '모두 포함하는 데이터라는 뜻')
     query = db.multi_query(
-        T.dataset.insert(
+        S.dataset._.insert(
             *dset_info, description
         ),
-        T.dataset_annotation.insert(*F.concat(
+        S.dataset_annotation._.insert(*F.concat(
             dset_anno_rows(dset_info, rbk, 'train'),
             dset_anno_rows(dset_info, rbk, 'valid'),
             dset_anno_rows(dset_info, rbk, 'test'),

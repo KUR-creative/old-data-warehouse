@@ -2,13 +2,14 @@ import os
 from pathlib import Path
 
 import cv2
-from pypika import Table, Query, Order
+from pypika import Query, Order
 import funcy as F
 from tqdm import tqdm
 
 from dw import common
 from dw.utils import fp, etc
 from dw import db
+from dw.schema import schema as S, Any
 
 
 @fp.multi
@@ -20,7 +21,7 @@ def generate(connection, src_dataset, out_form, option):
     ''' train / valid / test not specified: means getting biggest dataset '''
     return generate_snet_easy(connection, src_dataset, out_form, option)
 
-def generate_snet_easy(connection, src_dataset, out_form, mask_dir_relpath):
+def generate_snet_easy(connection, src_dataset, out_form, mask_dir_relpath) -> Any:
     '''
     Generate snet easy_only dataset from DB
     1. Get data from Db.
@@ -35,14 +36,14 @@ def generate_snet_easy(connection, src_dataset, out_form, mask_dir_relpath):
     # Get biggest dataset
     train, valid, test = 'train', 'valid', 'test'
     tvt = db.get(
-        Table('dataset')
+        S.dataset._
             .select('train', 'valid', 'test')
             .orderby('train', 'valid', 'test', order=Order.desc),
         connection
     )[0].as_dict()
 
     # Get root path of file source of biggest dataset
-    file_source = Table('file_source')
+    file_source = S.file_source._
     root = db.get(
         file_source
             .select('root_path')
@@ -51,9 +52,9 @@ def generate_snet_easy(connection, src_dataset, out_form, mask_dir_relpath):
     )[0]['root_path']
     
     # Get mask paths of 'rbk' dataset
-    dataset_annotation = Table('dataset_annotation')
-    mask_file = Table('file').as_('mask_file')
-    mask_row = Table('mask')
+    dataset_annotation = S.dataset_annotation._
+    mask_file = S.file._.as_('mask_file')
+    mask_row = S.mask._
     rows = db.get(
         Query.from_(mask_file).from_(dataset_annotation).from_(mask_row)
              .select(
@@ -113,16 +114,16 @@ def generate_snet_easy(connection, src_dataset, out_form, mask_dir_relpath):
 
     # Has db easy only scheme?
     easy_only = 'easy_only'
-    mask_scheme = Table('mask_scheme')
+    mask_scheme = S.mask_scheme._
     has_easy_only_scheme = db.contains(
         mask_scheme, 'name', easy_only, connection)
     
     # If not, add new mask scheme: easy_only
     if not has_easy_only_scheme:
         query = db.multi_query(
-            Table('mask_scheme').insert(
+            S.mask_scheme._.insert(
                 easy_only, 'white, black 2class, easy-text only dataset'),
-            Table('mask_scheme_content').insert(
+            S.mask_scheme_content._.insert(
                 (easy_only, '#FFFFFF', 'text'),
                 (easy_only, '#000000', 'background')), 
         )
@@ -138,10 +139,10 @@ def generate_snet_easy(connection, src_dataset, out_form, mask_dir_relpath):
             .insert(*zip(
                 mask_uuids, F.repeat(src_dataset.name), relpaths, abspaths
             )),
-        Table('mask').insert(*zip(
+        S.mask._.insert(*zip(
             mask_uuids, F.repeat(easy_only)
         )),
-        Table('annotation').insert(*zip(
+        S.annotation._.insert(*zip(
             img_uuids, mask_uuids, F.repeat('mask')
         ))
     )
@@ -157,10 +158,10 @@ def generate_snet_easy(connection, src_dataset, out_form, mask_dir_relpath):
         'old snet easy only dataset. split=easy_only는 '
       + 'easy text만 포함하는 데이터라는 뜻')
     insert_dataset_query = db.multi_query(
-        Table('dataset').insert(
+        S.dataset._.insert(
             *dset_info, description
         ),
-        Table('dataset_annotation').insert(*fp.map(
+        S.dataset_annotation._.insert(*fp.map(
             lambda row, output: (
                 *dset_info, str(row.input), output, row.usage
             ),
