@@ -36,6 +36,21 @@ class file:
 class image:
     _           = Table('image')
     uuid        = _.uuid
+    y           = _.y
+    x           = _.x
+    h           = _.h
+    w           = _.w
+    full_h      = _.full_h
+    full_w      = _.full_w
+class image_metadata:
+    _           = Table('image_metadata')
+    uuid        = _.uuid
+    y           = _.y
+    x           = _.x
+    h           = _.h
+    w           = _.w
+    depth       = _.depth
+    hash        = _.hash
 class mask_scheme:
     _           = Table('mask_scheme')
     name        = _.name
@@ -56,6 +71,10 @@ class annotation_type:
 class annotation:
     _           = Table('annotation')
     input       = _.input
+    y           = _.y
+    x           = _.x
+    h           = _.h
+    w           = _.w
     output      = _.output
     type        = _.type
 class dataset:
@@ -76,10 +95,3 @@ class dataset_annotation:
     input       = _.input
     output      = _.output
     usage       = _.usage
-class image_metadata:
-    _           = Table('image_metadata')
-    uuid        = _.uuid
-    size        = _.size
-    height      = _.height
-    width       = _.width
-    depth       = _.depth
