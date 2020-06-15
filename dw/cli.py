@@ -84,9 +84,11 @@ def tmp_tfrecord_test(tfrecord_path='/home/kur/dev/szmc/nn-lab/dataset/snet285wk
     from tests import export_test
     export_test.tmp_dset_testing(tfrecord_path)
     
-def update_schema():
-    ''' Update dw/schema/schema.py. If no change, no output. '''
+def mypy():
+    ''' Run mypy after generating latest dw/schema/schema.py. '''
     from dw.schema.schema import Tables as T, Columns as C
+    import os
+    os.system('mypy')
     
 class init(object):
     ''' Initialize something. These commands need to be called only once. '''
