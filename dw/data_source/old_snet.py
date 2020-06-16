@@ -12,6 +12,7 @@ import json
 import funcy as F
 from pypika import Query
 import yaml
+import imagesize
 #from pypika import functions as fn
 
 from dw.utils import file_utils as fu
@@ -82,6 +83,25 @@ def add_data(root, connection) -> Any:
     img_uuids = etc.uuid4strs(len(img_abspaths))
     rbk_uuids = etc.uuid4strs(len(rbk_abspaths))
     wk_uuids = etc.uuid4strs(len(wk_abspaths))
+
+    img_sizeseq = fp.map(
+        fp.pipe(
+            imagesize.get,
+            fp.tup(lambda w,h: (0,0, h,w, h,w))
+        ),
+        img_abspaths
+    )
+    img_rows = fp.lmap(
+        lambda uuid, size_info: (uuid, *size_info),
+        img_uuids, img_sizeseq)
+    
+    output_rows = F.lconcat(
+        zip(rbk_uuids, F.repeat('mask')),
+        zip(wk_uuids, F.repeat('mask')),
+    )               
+    annotation_rows = F.lmap(
+        lambda img_info, out_info: img_info[:5] + out_info,
+        img_rows * 2, output_rows)#uuid,y,x,h,w          
     
     all_uuids = img_uuids + rbk_uuids + wk_uuids
     abspaths = img_abspaths + rbk_abspaths + wk_abspaths
@@ -89,7 +109,8 @@ def add_data(root, connection) -> Any:
     
     # Has db 'mask' type?
     annotation_type = S.annotation_type._
-    has_mask_type = db.contains(annotation_type, 'name', 'mask', connection)
+    has_mask_type = db.contains(
+        annotation_type, 'name', 'mask', connection)
     
     # Run queries.
     uuid, source, relpath, abspath = (
@@ -104,8 +125,7 @@ def add_data(root, connection) -> Any:
                 relpaths, abspaths
             )),
         # Add images
-        S.image._.insert(
-            *fp.map(lambda x: (x,), img_uuids)),
+        S.image._.insert(*img_rows),
         # Add masks
         S.mask_scheme._.insert(
             ('rbk', 'red, blue, black 3 class dataset'),
@@ -124,10 +144,7 @@ def add_data(root, connection) -> Any:
         annotation_type.insert(
             ('mask', 'image that has same height,width of input')
         ) if not has_mask_type else '',
-        S.annotation._.insert(*F.concat(
-            zip(img_uuids, rbk_uuids, F.repeat('mask')),
-            zip(img_uuids, wk_uuids, F.repeat('mask')),
-        ))
+        S.annotation._.insert(*annotation_rows)
     )
     db.run(query, connection)
     

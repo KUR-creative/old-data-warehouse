@@ -69,6 +69,7 @@ CREATE TABLE IF NOT EXISTS mask (
     uuid    UUID    NOT NULL UNIQUE     REFERENCES file(uuid),
     scheme  TEXT    REFERENCES mask_scheme(name)
 );
+-- TODO: masks are also imgs.. Change later..
 
 ----------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS annotation_type (
