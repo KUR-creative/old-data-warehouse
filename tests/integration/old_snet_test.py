@@ -16,23 +16,24 @@ from dw.schema import schema as S, Any
 from dw.schema.gen_schema import latest as latest_schema
 
 
-def test_program_behavior(conn, root, yaml) -> Any:
+def test_program_behavior(conn, snet_root, yaml) -> Any:
     '''
     If you don't know how to pass args, run `python main.py log <testdb>`
     
     args: 
         conn: string 'id:pw@host:port/dbname' format.
-        root: root directory path string of old snet dataset. (src)
+        snet_root: root directory path string of old snet dataset. (src)
         yaml: file path of train/valid/split specified yaml (legacy)
     '''
     conn_str = conn
+    root = snet_root
     #### GIVEN #####################################################
-    if not conn_str:
+    if not conn_str or root is None:
         pytest.skip('this tests old_snet.add_data(root, conn, yaml)')
     conn = db.connection(conn_str)
     if not conn:
         assert False, f'Invalid connection string:\n{conn}'
-    if root is None or (not Path(root).exists()):
+    if (not Path(root).exists()):
         assert False, f'Invalid root: {root}'
     if yaml is None or (not Path(yaml).exists()):
         assert False, f'Yaml file not exists: {yaml}'
