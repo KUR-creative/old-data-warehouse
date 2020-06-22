@@ -2,7 +2,7 @@ from collections import namedtuple
 
 import psycopg2 as pg
 import records
-from pypika import Query, Table
+from pypika import Table
 from pypika import functions as fn
 from parse import parse
 
@@ -22,7 +22,7 @@ def connection(conn_str):
 DROP_ALL_QUERY = 'DROP SCHEMA public CASCADE; CREATE SCHEMA public;'
 
 #-----------------------------------------------------------------------------
-def count_rows(table: Table, conn:Connection, where=None):
+def count_rows(table:Table, conn:Connection, where=None):
     query =(table.select(fn.Count('*')).where(where) if where
        else table.select(fn.Count('*')))
     return get(query, conn)[0]['count']

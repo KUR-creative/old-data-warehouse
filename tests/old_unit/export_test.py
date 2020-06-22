@@ -86,7 +86,7 @@ def tup_1hot(num_class, bin_1hot):
         'assert fail: 0 < {} <= {}'.format(
             bin_1hot, 2**(num_class - 1))
     assert (bin_1hot % 2 == 0 or bin_1hot == 1), \
-        'assert fail: {} % 2 == 0 or {} == 1'.format(bin_1hot)
+        'assert fail: {} % 2 == 0 or {} == 1'.format(bin_1hot, bin_1hot)
 
     ret = [0] * num_class
     for i in range(num_class + 1):

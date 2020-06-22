@@ -5,7 +5,6 @@ This test is written to cope with DB schema changing.
 from pathlib import Path
 import shutil
 
-from pypika import Table
 from parse import parse
 import pytest
 
@@ -13,9 +12,10 @@ from dw.data_source import old_snet
 from dw import db
 from dw import common
 from dw.tasks import generate
+from dw.schema import schema as S, Any
 
 
-def test_program_behavior(conn, root, yaml):
+def test_program_behavior(conn, root, yaml) -> Any:
     '''
     If you don't know how to pass args, run `python main.py log <testdb>`
     
@@ -51,11 +51,11 @@ def test_program_behavior(conn, root, yaml):
     # Check properties of DB
     num_imgs = len(list(Path(root, 'image').glob('*')))
     
-    num_files = db.count_rows(Table('file'), conn)
+    num_files = db.count_rows(S.file._, conn)
     assert num_files == 3 * num_imgs, 'DB has img, wk, rbk images: 3 * num_img'
-    num_masks = db.count_rows(Table('mask'), conn)
+    num_masks = db.count_rows(S.mask._, conn)
     assert num_masks == 2 * num_imgs, 'DB has wk, rbk masks: 2 * num_img'
-    num_datasets = db.count_rows(Table('dataset'), conn)
+    num_datasets = db.count_rows(S.dataset._, conn)
     assert num_datasets == 0, 'DB has no dataset now.'
     
     #### AND WHEN #################################################
@@ -65,9 +65,9 @@ def test_program_behavior(conn, root, yaml):
     
     #--- THEN -----------------------------------------------------
     # Check properties of DB
-    num_datasets = db.count_rows(Table('dataset'), conn)
+    num_datasets = db.count_rows(S.dataset._, conn)
     assert num_datasets == 1
-    num_relations = db.count_rows(Table('dataset_annotation'), conn)
+    num_relations = db.count_rows(S.dataset_annotation._, conn)
     assert num_relations == 2 * num_imgs
 
     #### AND WHEN #################################################
