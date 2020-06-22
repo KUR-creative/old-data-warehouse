@@ -62,7 +62,6 @@ def add_data(root, connection) -> Any:
     if not is_valid(root):
         return 'Invalid Manga109 dataset'
 
-    return None
     # Get images (path, title, no).
     relpath = F.partial(os.path.relpath, start=root)
     sorted_children = fp.pipe(fu.children, fu.human_sorted)

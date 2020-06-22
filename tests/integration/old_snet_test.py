@@ -33,7 +33,7 @@ def test_program_behavior(conn, snet_root, yaml) -> Any:
     conn = db.connection(conn_str)
     if not conn:
         assert False, f'Invalid connection string:\n{conn}'
-    if (not Path(root).exists()):
+    if not Path(root).exists():
         assert False, f'Invalid root: {root}'
     if yaml is None or (not Path(yaml).exists()):
         assert False, f'Yaml file not exists: {yaml}'
