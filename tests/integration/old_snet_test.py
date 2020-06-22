@@ -37,11 +37,7 @@ def test_program_behavior(conn, root, yaml) -> Any:
     if yaml is None or (not Path(yaml).exists()):
         assert False, f'Yaml file not exists: {yaml}'
 
-    # Reinit
-    db.run(db.DROP_ALL_QUERY, conn)
-    schema = latest_schema() # TODO: use latest schema file finder(#39)
-    with open(schema, 'r') as s:
-        db.init(s.read(), conn)
+    db.reinit(conn, latest_schema())
         
     #### WHEN #####################################################
     # Add old_snet data

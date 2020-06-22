@@ -49,6 +49,11 @@ def contains(table, prop, query_val, conn:Connection):
 
     return (len(dics) > 0)
     
+def reinit(conn:Connection, schema_path):
+    global DROP_ALL_QUERY
+    run(DROP_ALL_QUERY, conn)
+    with open(schema_path, 'r') as s:
+        init(s.read(), conn)
 #-----------------------------------------------------------------------------
 def multi_query(*queries):
     ''' 
