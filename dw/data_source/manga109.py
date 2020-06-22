@@ -23,11 +23,11 @@ import os
 from pathlib import Path
 
 import funcy as F
-from pypika import Table
 
 from dw.utils import file_utils as fu
 from dw.utils import fp
 from dw import db
+from dw.schema import schema as S, Any
 
 
 def is_valid(root):
@@ -56,7 +56,7 @@ def is_valid(root):
     
     return True
 
-def add_data(root, connection):
+def add_data(root, connection) -> Any:
     ''' Add Manga109 data to DB(connection) '''
     # TODO: Rewrite this
     if not is_valid(root):
@@ -90,14 +90,14 @@ def add_data(root, connection):
     )
     
     # Run queries.
-    tab_name = 'manga109_raw'
+    #tab_name = ''
     query = db.multi_query(
-        Table(tab_name).insert(
+        S.manga109_raw._.insert(
             *zip(multiplied_titles, nos, imgpaths)),
-        Table('manga109_xml').insert(
+        S.manga109_xml._.insert(
             *zip(titles, xmlseq)),
-        Table('raw_table_root').insert(
-            tab_name, root)
+        S.raw_table_root._.insert(
+            'manga109_raw', root)
     )
     db.run(query, connection)
     

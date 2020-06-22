@@ -5,33 +5,34 @@ import cv2
 from tqdm import tqdm
 import numpy as np
 import funcy as F
-from pypika import Table, Query
+from pypika import Query
 from bidict import bidict
 
 from dw import common
 from dw.utils import fp
 from dw import db
+from dw.schema import schema as S, Any
 
 
 @fp.multi
 def export(connection, out_path, out_form, dataset, option=None):
     return out_form, dataset, option
 
-@fp.mmethod(export, ('tfrecord', common.Dataset('old_snet', 'full'), 'rbk'))
+@fp.mmethod(export, ('tfrecord', common.Dataset('old_snet', 'full'), 'rbk')) # type: ignore[no-redef]
 def export(connection, out_path, out_form, dataset, option):
     export_old_snet(connection, out_path, dataset, option)
-@fp.mmethod(export, ('tfrecord', common.Dataset('old_snet', 'full'), 'wk'))
+@fp.mmethod(export, ('tfrecord', common.Dataset('old_snet', 'full'), 'wk')) # type: ignore[no-redef]
 def export(connection, out_path, out_form, dataset, option):
     export_old_snet(connection, out_path, dataset, option)
-@fp.mmethod(export, ('tfrecord', common.Dataset('old_snet', 'easy_only'), 'easy_only'))
+@fp.mmethod(export, ('tfrecord', common.Dataset('old_snet', 'easy_only'), 'easy_only')) # type: ignore[no-redef]
 def export(connection, out_path, out_form, dataset, option):
     export_old_snet(connection, out_path, dataset, option)
     
-def export_old_snet(connection, out_path, dset, mask_scheme):
-    file_in = Table('file').as_('file_in')
-    file_out = Table('file').as_('file_out')
-    mask = Table('mask'); dataset = Table('dataset')
-    dataset_annotation = Table('dataset_annotation')
+def export_old_snet(connection, out_path, dset, mask_scheme) -> Any:
+    file_in = S.file._.as_('file_in')
+    file_out = S.file._.as_('file_out')
+    mask = S.mask._; dataset = S.dataset._
+    dataset_annotation = S.dataset_annotation._
     
     raw_rows = db.get_pg(
         Query.from_(dataset).from_(dataset_annotation)
@@ -68,7 +69,7 @@ def export_old_snet(connection, out_path, dset, mask_scheme):
     valid_pairs = F.lmap(row2pair, valids)
     test_pairs = F.lmap(row2pair, tests)
 
-    src_dst_colormap = {
+    src_dst_colormap :Any = {
         (255,0,0):(1,0,0), (0,0,255):(0,1,0), (0,0,0):(0,0,1)
     } if mask_scheme == 'rbk' else {
         (255,255,255):(1,0), (0,0,0):(0,1)

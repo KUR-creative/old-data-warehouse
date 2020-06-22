@@ -2,7 +2,8 @@ import re
 import sys
 import subprocess
 
-from pypika import Table, Query
+from pypika import Query
+from dw.schema import schema as S, Any
 
 from dw import db
 
@@ -13,7 +14,7 @@ def git_hash():
        .strip().decode('utf8'))
 
 connect_re = re.compile('.+:.+@.+:[0-9]+\/.+') # very generous
-def log_cli_cmd(connection, description):
+def log_cli_cmd(connection, description) -> Any:
     ''' 
     Note - It uses command from sys.argv.
     So it doesn't need explicit command information in args.
@@ -34,8 +35,10 @@ def log_cli_cmd(connection, description):
     )
     
     query = db.multi_query(
-        Query.into('executed_command').columns(
-            'command', 'git_hash', 'note'
+        Query.into(S.executed_command._).columns(
+            S.executed_command.command,
+            S.executed_command.git_hash,
+            S.executed_command.note
         ).insert(
             cmd, git_hash(), description
         )
@@ -45,4 +48,4 @@ def log_cli_cmd(connection, description):
 
 def get_cli_cmds(connection, full_table:bool):
     cols = '*' if full_table else 'command'
-    return db.get(Table('executed_command').select(cols), connection)
+    return db.get(S.executed_command._.select(cols), connection)

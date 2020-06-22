@@ -84,6 +84,14 @@ def tmp_tfrecord_test(tfrecord_path='/home/kur/dev/szmc/nn-lab/dataset/snet285wk
     from tests import export_test
     export_test.tmp_dset_testing(tfrecord_path)
     
+def mypy():
+    ''' Run mypy after generating latest dw/schema/schema.py. '''
+    from dw.schema import gen_schema
+    import os
+
+    gen_schema.generate()
+    os.system('mypy')
+    
 class init(object):
     ''' Initialize something. These commands need to be called only once. '''
     def szmc_db(self, connection, schema='./dw/schema/szmc_0.1.0.sql', note=None):
