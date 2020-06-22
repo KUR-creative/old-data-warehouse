@@ -13,6 +13,7 @@ from dw import db
 from dw import common
 from dw.tasks import generate
 from dw.schema import schema as S, Any
+from dw.schema.gen_schema import latest as latest_schema
 
 
 def test_program_behavior(conn, root, yaml) -> Any:
@@ -38,7 +39,7 @@ def test_program_behavior(conn, root, yaml) -> Any:
 
     # Reinit
     db.run(db.DROP_ALL_QUERY, conn)
-    schema = './dw/schema/szmc_0.1.0.sql' # TODO: use latest schema file finder(#39)
+    schema = latest_schema() # TODO: use latest schema file finder(#39)
     with open(schema, 'r') as s:
         db.init(s.read(), conn)
         
