@@ -4,6 +4,8 @@ This test is written to add manga109 data.
 '''
 from pathlib import Path
 
+import pytest
+
 from dw import db
 from dw.utils import file_utils as fu
 from dw.data_source import manga109

@@ -25,9 +25,10 @@ from pathlib import Path
 import funcy as F
 from pypika import Query
 
+from dw import db
+from dw import query as Q
 from dw.utils import file_utils as fu
 from dw.utils import fp, etc
-from dw import db
 from dw.schema import schema as S, Any
 
 
@@ -63,6 +64,7 @@ def add_data(root, connection) -> Any:
     if not is_valid(root):
         return 'Invalid Manga109 dataset'
 
+    # Insert file information
     img_abspaths = fu.descendants(Path(root, 'images'))
     xml_abspaths = fu.descendants(Path(root, 'manga109-annotations'))
     all_abspaths = img_abspaths + xml_abspaths
@@ -76,20 +78,13 @@ def add_data(root, connection) -> Any:
     xml_uuids = etc.uuid4strs(len(xml_abspaths))
     all_uuids = img_uuids + xml_uuids
     
-    uuid, source, relpath, abspath = (
-        S.file.uuid, S.file.source, S.file.relpath, S.file.abspath)
-    query = db.multi_query(
-        S.file_source._.insert(
-            'manga109', root, etc.host_ip()),
-        Query.into(S.file._)
-            .columns(uuid, source, relpath, abspath)
-            .insert(*zip(
-                all_uuids, F.repeat('manga109'),
-                all_relpaths, all_abspaths
-            )),
+    file_query = Q.insert_files(
+        all_uuids, all_relpaths, all_abspaths,
+        'manga109', root
     )
 
-
+    # Run query
+    query = db.multi_query(file_query)
     db.run(query, connection)
     '''
     # Get images (path, title, no).

@@ -15,9 +15,10 @@ import yaml
 import imagesize
 #from pypika import functions as fn
 
+from dw import db
+from dw import query as Q
 from dw.utils import file_utils as fu
 from dw.utils import fp, etc
-from dw import db
 from dw.schema import schema as S, Any
 
 
@@ -83,7 +84,17 @@ def add_data(root, connection) -> Any:
     img_uuids = etc.uuid4strs(len(img_abspaths))
     rbk_uuids = etc.uuid4strs(len(rbk_abspaths))
     wk_uuids = etc.uuid4strs(len(wk_abspaths))
-
+    
+    all_uuids = img_uuids + rbk_uuids + wk_uuids
+    all_abspaths = img_abspaths + rbk_abspaths + wk_abspaths
+    all_relpaths = fp.lmap(relpath, all_abspaths)
+    
+    file_query = Q.insert_files(
+        all_uuids, all_relpaths, all_abspaths,
+        'old_snet', root_dir
+    )
+    
+    # othes
     img_sizeseq = fp.map(
         fp.pipe(
             imagesize.get,
@@ -103,27 +114,14 @@ def add_data(root, connection) -> Any:
         lambda img_info, out_info: img_info[:5] + out_info,
         img_rows * 2, output_rows)#uuid,y,x,h,w          
     
-    all_uuids = img_uuids + rbk_uuids + wk_uuids
-    abspaths = img_abspaths + rbk_abspaths + wk_abspaths
-    relpaths = fp.lmap(relpath, abspaths)
-    
     # Has db 'mask' type?
     annotation_type = S.annotation_type._
     has_mask_type = db.contains(
         annotation_type, 'name', 'mask', connection)
     
     # Run queries.
-    uuid, source, relpath, abspath = (
-        S.file.uuid, S.file.source, S.file.relpath, S.file.abspath)
     query = db.multi_query(
-        S.file_source._.insert(
-            'old_snet', str(root_dir), etc.host_ip()),
-        Query.into(S.file._)
-            .columns(uuid, source, relpath, abspath)
-            .insert(*zip(
-                all_uuids, F.repeat('old_snet'),
-                relpaths, abspaths
-            )),
+        file_query,
         # Add images
         S.image._.insert(*img_rows),
         # Add masks
