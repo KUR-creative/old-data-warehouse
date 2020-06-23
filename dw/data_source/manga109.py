@@ -23,9 +23,10 @@ import os
 from pathlib import Path
 
 import funcy as F
+from pypika import Query
 
 from dw.utils import file_utils as fu
-from dw.utils import fp
+from dw.utils import fp, etc
 from dw import db
 from dw.schema import schema as S, Any
 
@@ -62,6 +63,35 @@ def add_data(root, connection) -> Any:
     if not is_valid(root):
         return 'Invalid Manga109 dataset'
 
+    img_abspaths = fu.descendants(Path(root, 'images'))
+    xml_abspaths = fu.descendants(Path(root, 'manga109-annotations'))
+    all_abspaths = img_abspaths + xml_abspaths
+    
+    relpath = F.partial(os.path.relpath, start=root)
+    img_relpaths = fp.lmap(relpath, img_abspaths)
+    xml_relpaths = fp.lmap(relpath, xml_abspaths)
+    all_relpaths = img_relpaths + xml_relpaths
+    
+    img_uuids = etc.uuid4strs(len(img_abspaths))
+    xml_uuids = etc.uuid4strs(len(xml_abspaths))
+    all_uuids = img_uuids + xml_uuids
+    
+    uuid, source, relpath, abspath = (
+        S.file.uuid, S.file.source, S.file.relpath, S.file.abspath)
+    query = db.multi_query(
+        S.file_source._.insert(
+            'manga109', root, etc.host_ip()),
+        Query.into(S.file._)
+            .columns(uuid, source, relpath, abspath)
+            .insert(*zip(
+                all_uuids, F.repeat('manga109'),
+                all_relpaths, all_abspaths
+            )),
+    )
+
+
+    db.run(query, connection)
+    '''
     # Get images (path, title, no).
     relpath = F.partial(os.path.relpath, start=root)
     sorted_children = fp.pipe(fu.children, fu.human_sorted)
@@ -99,5 +129,6 @@ def add_data(root, connection) -> Any:
             'manga109_raw', root)
     )
     db.run(query, connection)
+    '''
     
     # None means success.
