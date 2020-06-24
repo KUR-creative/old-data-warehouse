@@ -1,5 +1,9 @@
 '''
 Pre-defined query building functions
+These codes can be changed according to schema changes.
+
+Maybe I need better code partitioning..
+
 '''
 from typing import Union, List
 from pathlib import Path
@@ -20,6 +24,7 @@ def insert_files(all_uuids: List[str],
     '''
     Build inserting file information to file_source, file table.
     If root_dir = None, do not insert file_source info.
+    It just used in dw.data_source.modules
     '''
     uuid, source, relpath, abspath = (
         S.file.uuid, S.file.source, S.file.relpath, S.file.abspath)

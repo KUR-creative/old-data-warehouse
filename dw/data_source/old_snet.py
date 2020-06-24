@@ -13,13 +13,13 @@ import funcy as F
 from pypika import Query
 import yaml
 import imagesize
-#from pypika import functions as fn
 
 from dw import db
 from dw import query as Q
 from dw.utils import file_utils as fu
 from dw.utils import fp, etc
 from dw.schema import schema as S, Any
+from dw.data_source import common
 
 
 def is_valid_directory(root):
@@ -94,17 +94,8 @@ def add_data(root, connection) -> Any:
         'old_snet', root_dir
     )
     
-    # othes
-    img_sizeseq = fp.map(
-        fp.pipe(
-            imagesize.get,
-            fp.tup(lambda w,h: (0,0, h,w, h,w))
-        ),
-        img_abspaths
-    )
-    img_rows = fp.lmap(
-        lambda uuid, size_info: (uuid, *size_info),
-        img_uuids, img_sizeseq)
+    # others
+    img_rows = common.full_sized_image_rows(img_uuids, img_abspaths)
     
     output_rows = F.lconcat(
         zip(rbk_uuids, F.repeat('mask')),

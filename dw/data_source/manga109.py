@@ -24,12 +24,14 @@ from pathlib import Path
 
 import funcy as F
 from pypika import Query
+import imagesize
 
 from dw import db
 from dw import query as Q
 from dw.utils import file_utils as fu
 from dw.utils import fp, etc
 from dw.schema import schema as S, Any
+from dw.data_source import common
 
 
 def is_valid(root):
@@ -82,6 +84,9 @@ def add_data(root, connection) -> Any:
         all_uuids, all_relpaths, all_abspaths,
         'manga109', root
     )
+
+    # Insert image information
+    img_rows = common.full_sized_image_rows(img_uuids, img_abspaths)
 
     # Run query
     query = db.multi_query(file_query)
