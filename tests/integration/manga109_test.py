@@ -40,5 +40,8 @@ def test_program_behavior(conn, m109_root) -> Any:
     num_imgs = len(fu.descendants(Path(root) / 'images'))
     num_xmls = len(fu.descendants(Path(root) / 'manga109-annotations'))
     num_files = num_imgs + num_xmls
-    num_rows = db.count_rows(S.file._, conn)
-    assert num_files == num_rows
+    num_file_rows = db.count_rows(S.file._, conn)
+    assert num_file_rows == num_files
+
+    num_img_rows = db.count_rows(S.image._, conn)
+    assert num_img_rows == num_imgs

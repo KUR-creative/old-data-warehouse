@@ -24,7 +24,6 @@ from pathlib import Path
 
 import funcy as F
 from pypika import Query
-import imagesize
 
 from dw import db
 from dw import query as Q
@@ -89,7 +88,10 @@ def add_data(root, connection) -> Any:
     img_rows = common.full_sized_image_rows(img_uuids, img_abspaths)
 
     # Run query
-    query = db.multi_query(file_query)
+    query = db.multi_query(
+        file_query, 
+        S.image._.insert(*img_rows),
+    )
     db.run(query, connection)
     '''
     # Get images (path, title, no).
