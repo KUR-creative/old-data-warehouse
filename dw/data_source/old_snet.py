@@ -105,11 +105,6 @@ def add_data(root, connection) -> Any:
         lambda img_info, out_info: img_info[:5] + out_info,
         img_rows * 2, output_rows)#uuid,y,x,h,w          
     
-    # Has db 'mask' type?
-    annotation_type = S.annotation_type._
-    has_mask_type = db.contains(
-        annotation_type, 'name', 'mask', connection)
-    
     # Run queries.
     query = db.multi_query(
         file_query,
@@ -130,9 +125,11 @@ def add_data(root, connection) -> Any:
             zip(wk_uuids, F.repeat('wk'))
         )),
         # Add annotation relation
-        annotation_type.insert(
-            ('mask', 'image that has same height,width of input')
-        ) if not has_mask_type else '',
+        Q.insert_new_annotation_type(
+            'mask',
+            'image that has same height, width of input',
+            connection
+        ),
         S.annotation._.insert(*annotation_rows)
     )
     db.run(query, connection)

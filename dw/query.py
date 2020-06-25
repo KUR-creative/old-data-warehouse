@@ -9,7 +9,7 @@ from typing import Union, List
 from pathlib import Path
 
 import funcy as F
-from pypika import Query
+from pypika import Query, Table
 
 from dw import db
 from dw.utils import fp, etc
@@ -39,3 +39,27 @@ def insert_files(all_uuids: List[str],
                 relpaths, abspaths
             ))
     )
+
+def insert_new_annotation_type(name:str,
+                               description:str,
+                               conn:db.Connection):
+    ''' If the type(annotation_type.name = name) already exists,
+    it return empty string(''), else return db query string. '''
+    return insert_if_not_exists(
+        S.annotation_type._, name, description, conn)
+
+def insert_if_not_exists(table:Table,
+                         name:str,
+                         description:str,
+                         conn:db.Connection):
+    ''' 
+    If object(table.name = name) already exists,
+    it return empty string(''), else return db query string.
+    
+    This is possible because the schema of mask_scheme and
+    annotation_type are the same...
+    '''
+    exists = db.contains(table, 'name', name, conn)
+    return table.insert(
+        (name, description)
+    ) if not exists else ''

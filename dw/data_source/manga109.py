@@ -91,6 +91,11 @@ def add_data(root, connection) -> Any:
     query = db.multi_query(
         file_query, 
         S.image._.insert(*img_rows),
+        Q.insert_new_annotation_type(
+            'manga109xml',
+            'xml file for a manga title',
+            connection
+        )
     )
     db.run(query, connection)
     '''
