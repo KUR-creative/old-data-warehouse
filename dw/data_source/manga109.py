@@ -61,7 +61,6 @@ def is_valid(root):
 
 def add_data(root, connection) -> Any:
     ''' Add Manga109 data to DB(connection) '''
-    # TODO: Rewrite this
     if not is_valid(root):
         return 'Invalid Manga109 dataset'
 
@@ -85,57 +84,39 @@ def add_data(root, connection) -> Any:
     )
 
     # Insert image information
-    img_rows = common.full_sized_image_rows(img_uuids, img_abspaths)
-
+    img_rows = common.full_sized_image_rows(
+        img_uuids, img_abspaths)
+    
+    # Insert xml annotation type
+    annotation_name = 'manga109xml'
+    new_annotation_type_query = Q.insert_new_annotation_type(
+        annotation_name,
+        'xml file for a manga title',
+        connection)
+    
+    # Build annotation_rows: [img_pk, xml_uuid]
+    title2xml_uuid = F.zipdict(
+        F.map(lambda p: Path(p).stem, xml_abspaths),
+        xml_uuids)
+    def title(img_path):
+        return Path(img_path).parents[0].parts[-1] #m109 specific
+    img_primary_keys = F.lmap(
+        fp.tup(lambda inp, y,x, h,w, *_: (inp, y,x, h,w)),
+        img_rows)
+    img_xml_uuids = F.lmap(
+        fp.pipe(title, title2xml_uuid), img_abspaths)
+    annotation_rows = F.lmap(
+        lambda img_pk, xml_uuid:
+        (*img_pk, xml_uuid, annotation_name),
+        img_primary_keys, img_xml_uuids)
+        
     # Run query
     query = db.multi_query(
         file_query, 
         S.image._.insert(*img_rows),
-        Q.insert_new_annotation_type(
-            'manga109xml',
-            'xml file for a manga title',
-            connection
-        )
+        new_annotation_type_query,
+        S.annotation._.insert(*annotation_rows)
     )
     db.run(query, connection)
-    '''
-    # Get images (path, title, no).
-    relpath = F.partial(os.path.relpath, start=root)
-    sorted_children = fp.pipe(fu.children, fu.human_sorted)
-    title_dirpaths = sorted_children(Path(root, 'images'))
-    stem = lambda p: Path(p).stem
-    imgpaths = fp.go(
-        title_dirpaths,
-        fp.mapcat(sorted_children),
-        fp.lmap(relpath)
-    )
-    multiplied_titles, nos = fp.go(
-        imgpaths,
-        fp.map(stem),
-        fp.map(lambda s: s.rsplit('_', 1)),
-        fp.map(fp.tup(lambda title, no: [title, int(no)])),
-        fp.unzip
-    )
-
-    # Get metadata xml files
-    titles = fp.lmap(stem, title_dirpaths)
-    xmlseq = fp.go(
-        Path(root, 'manga109-annotations'),
-        sorted_children,
-        fp.map(lambda p: Path(p).read_text())
-    )
-    
-    # Run queries.
-    #tab_name = ''
-    query = db.multi_query(
-        S.manga109_raw._.insert(
-            *zip(multiplied_titles, nos, imgpaths)),
-        S.manga109_xml._.insert(
-            *zip(titles, xmlseq)),
-        S.raw_table_root._.insert(
-            'manga109_raw', root)
-    )
-    db.run(query, connection)
-    '''
     
     # None means success.

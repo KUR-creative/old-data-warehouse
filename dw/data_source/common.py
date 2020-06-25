@@ -4,9 +4,9 @@ Common logic for data processing of modules in data_source
 Query building functions may neend to be here... (See dw.query)
 '''
 from pathlib import Path
+from typing import Union, List
 
 import imagesize
-from typing import Union, List
 
 from dw.utils import fp
 

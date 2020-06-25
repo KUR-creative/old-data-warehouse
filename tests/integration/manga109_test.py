@@ -46,3 +46,6 @@ def test_program_behavior(conn, m109_root) -> Any:
     num_img_rows = db.count_rows(S.image._, conn)
     assert num_img_rows == num_imgs
     assert db.contains(S.annotation_type._, 'name', 'manga109xml', conn)
+    
+    num_img_xml_relations = db.count_rows(S.annotation._, conn)
+    assert num_img_rows == num_img_xml_relations
