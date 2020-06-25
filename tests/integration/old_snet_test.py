@@ -56,6 +56,11 @@ def test_program_behavior(conn, snet_root, yaml) -> Any:
     num_datasets = db.count_rows(S.dataset._, conn)
     assert num_datasets == 0, 'DB has no dataset now.'
     
+    assert db.contains(S.mask_scheme._, 'name', 'rbk', conn)
+    assert db.contains(S.mask_scheme._, 'name', 'wk', conn)
+    assert db.contains(S.mask_scheme_content._, 'description', 'easy text', conn)
+    assert db.contains(S.mask_scheme_content._, 'description', 'text', conn)
+    
     #### AND WHEN #################################################
     # Create old_snet dataset
     result = old_snet.create(yaml, conn)
@@ -78,6 +83,10 @@ def test_program_behavior(conn, snet_root, yaml) -> Any:
     # It just check validity of code after schema change..
     # So no crash = success. Too many tests are not effective.
     # NOTE: In future more test could be needed.. but NOT now!
+    assert db.contains(S.mask_scheme._, 'name', 'easy_only', conn)
+    assert db.contains(S.mask_scheme_content._, 'color', '#FFFFFF', conn)
+    assert db.contains(S.mask_scheme_content._, 'color', '#000000', conn)
+    
     assert num_imgs == len(list(Path(mask_dir_abspath).glob('*')))
     shutil.rmtree(mask_dir_abspath)
     

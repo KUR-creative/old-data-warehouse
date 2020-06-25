@@ -7,6 +7,7 @@ import funcy as F
 from tqdm import tqdm
 
 from dw import common
+from dw import query as Q
 from dw.utils import fp, etc
 from dw import db
 from dw.schema import schema as S, Any
@@ -126,21 +127,17 @@ def generate_snet_easy(connection, src_dataset, out_form, mask_dir_relpath) -> A
         cv2.imwrite(str(dstpath), mask)
     print('Done!')
 
-    # Has db easy only scheme?
-    mask_scheme = S.mask_scheme._
-    has_easy_only_scheme = db.contains(
-        mask_scheme, 'name', 'easy_only', connection)
-    
-    # If not, add new mask scheme: easy_only
-    if not has_easy_only_scheme:
-        query = db.multi_query(
-            S.mask_scheme._.insert(
-                'easy_only', 'white, black 2class, easy-text only dataset'),
-            S.mask_scheme_content._.insert(
-                ('easy_only', '#FFFFFF', 'text'),
-                ('easy_only', '#000000', 'background')), 
-        )
-        db.run(query, connection)
+    # Add new scheme (If already defined, it just be skipped).
+    db.run(
+        Q.insert_new_mask_scheme(
+            'easy_only',
+            'white, black 2class, easy-text only dataset',
+            connection,
+            ('easy_only', '#FFFFFF', 'text'),
+            ('easy_only', '#000000', 'background')
+        ),
+        connection
+    )
 
     # Save generated mask files, mask, annotation, dataset_annotation
     # This procedure similar to 'add' command, but image source is implicit.

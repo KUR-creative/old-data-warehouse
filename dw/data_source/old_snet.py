@@ -110,16 +110,21 @@ def add_data(root, connection) -> Any:
         file_query,
         # Add images
         S.image._.insert(*img_rows),
-        # Add masks
-        S.mask_scheme._.insert(
-            ('rbk', 'red, blue, black 3 class dataset'),
-            ( 'wk', 'white, black 2 class dataset')),
-        S.mask_scheme_content._.insert(
+        # Add new mask scheme(already exists, then is skipped)
+        Q.insert_new_mask_scheme(
+            'rbk',
+            'red, blue, black 3 class dataset',
+            connection,
             ('rbk', '#FF0000', 'easy text'), 
             ('rbk', '#0000FF', 'hard text'), 
             ('rbk', '#000000', 'background'),
+        ),
+        Q.insert_new_mask_scheme(
+            'wk', 'white, black 2 class dataset', connection,
             ( 'wk', '#FFFFFF', 'text'), 
-            ( 'wk', '#000000', 'background')), 
+            ( 'wk', '#000000', 'background')
+        ), 
+        # Add masks
         S.mask._.insert(*F.concat(
             zip(rbk_uuids, F.repeat('rbk')),
             zip(wk_uuids, F.repeat('wk'))

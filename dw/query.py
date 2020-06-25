@@ -5,7 +5,7 @@ These codes can be changed according to schema changes.
 Maybe I need better code partitioning..
 
 '''
-from typing import Union, List
+from typing import Union, List, Tuple
 from pathlib import Path
 
 import funcy as F
@@ -48,12 +48,27 @@ def insert_new_annotation_type(name:str,
     return insert_if_not_exists(
         S.annotation_type._, name, description, conn)
 
+def insert_new_mask_scheme(
+        name:str,
+        description:str,
+        conn:db.Connection,
+        *scheme_contents:Tuple[str, str, str]):
+    ''' If the scheme(mask_scheme.name = name) already exists,
+    it return empty string(''), else return db query string. '''
+    new_scheme_query = insert_if_not_exists(
+        S.mask_scheme._, name, description, conn)
+    return db.multi_query(
+        new_scheme_query,
+        S.mask_scheme_content._.insert(*scheme_contents)
+    ) if new_scheme_query else ''
+        
+    
 def insert_if_not_exists(table:Table,
                          name:str,
                          description:str,
                          conn:db.Connection):
     ''' 
-    If object(table.name = name) already exists,
+    If object(table.name = name) already exists in the table,
     it return empty string(''), else return db query string.
     
     This is possible because the schema of mask_scheme and
