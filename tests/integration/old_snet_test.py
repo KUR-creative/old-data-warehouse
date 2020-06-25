@@ -13,34 +13,32 @@ from dw import db
 from dw import common
 from dw.tasks import generate
 from dw.schema import schema as S, Any
+from dw.schema.gen_schema import latest as latest_schema
 
 
-def test_program_behavior(conn, root, yaml) -> Any:
+def test_program_behavior(conn, snet_root, yaml) -> Any:
     '''
     If you don't know how to pass args, run `python main.py log <testdb>`
     
     args: 
         conn: string 'id:pw@host:port/dbname' format.
-        root: root directory path string of old snet dataset. (src)
+        snet_root: root directory path string of old snet dataset. (src)
         yaml: file path of train/valid/split specified yaml (legacy)
     '''
     conn_str = conn
+    root = snet_root
     #### GIVEN #####################################################
-    if not conn_str:
+    if not conn_str or root is None:
         pytest.skip('this tests old_snet.add_data(root, conn, yaml)')
     conn = db.connection(conn_str)
     if not conn:
         assert False, f'Invalid connection string:\n{conn}'
-    if root is None or (not Path(root).exists()):
+    if not Path(root).exists():
         assert False, f'Invalid root: {root}'
     if yaml is None or (not Path(yaml).exists()):
         assert False, f'Yaml file not exists: {yaml}'
 
-    # Reinit
-    db.run(db.DROP_ALL_QUERY, conn)
-    schema = './dw/schema/szmc_0.1.0.sql' # TODO: use latest schema file finder(#39)
-    with open(schema, 'r') as s:
-        db.init(s.read(), conn)
+    db.reinit(conn, latest_schema())
         
     #### WHEN #####################################################
     # Add old_snet data
@@ -57,6 +55,11 @@ def test_program_behavior(conn, root, yaml) -> Any:
     assert num_masks == 2 * num_imgs, 'DB has wk, rbk masks: 2 * num_img'
     num_datasets = db.count_rows(S.dataset._, conn)
     assert num_datasets == 0, 'DB has no dataset now.'
+    
+    assert db.contains(S.mask_scheme._, 'name', 'rbk', conn)
+    assert db.contains(S.mask_scheme._, 'name', 'wk', conn)
+    assert db.contains(S.mask_scheme_content._, 'description', 'easy text', conn)
+    assert db.contains(S.mask_scheme_content._, 'description', 'text', conn)
     
     #### AND WHEN #################################################
     # Create old_snet dataset
@@ -80,6 +83,10 @@ def test_program_behavior(conn, root, yaml) -> Any:
     # It just check validity of code after schema change..
     # So no crash = success. Too many tests are not effective.
     # NOTE: In future more test could be needed.. but NOT now!
+    assert db.contains(S.mask_scheme._, 'name', 'easy_only', conn)
+    assert db.contains(S.mask_scheme_content._, 'color', '#FFFFFF', conn)
+    assert db.contains(S.mask_scheme_content._, 'color', '#000000', conn)
+    
     assert num_imgs == len(list(Path(mask_dir_abspath).glob('*')))
     shutil.rmtree(mask_dir_abspath)
     

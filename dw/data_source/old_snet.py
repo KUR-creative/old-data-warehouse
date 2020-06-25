@@ -13,12 +13,13 @@ import funcy as F
 from pypika import Query
 import yaml
 import imagesize
-#from pypika import functions as fn
 
+from dw import db
+from dw import query as Q
 from dw.utils import file_utils as fu
 from dw.utils import fp, etc
-from dw import db
 from dw.schema import schema as S, Any
+from dw.data_source import common
 
 
 def is_valid_directory(root):
@@ -83,17 +84,18 @@ def add_data(root, connection) -> Any:
     img_uuids = etc.uuid4strs(len(img_abspaths))
     rbk_uuids = etc.uuid4strs(len(rbk_abspaths))
     wk_uuids = etc.uuid4strs(len(wk_abspaths))
-
-    img_sizeseq = fp.map(
-        fp.pipe(
-            imagesize.get,
-            fp.tup(lambda w,h: (0,0, h,w, h,w))
-        ),
-        img_abspaths
+    
+    all_uuids = img_uuids + rbk_uuids + wk_uuids
+    all_abspaths = img_abspaths + rbk_abspaths + wk_abspaths
+    all_relpaths = fp.lmap(relpath, all_abspaths)
+    
+    file_query = Q.insert_files(
+        all_uuids, all_relpaths, all_abspaths,
+        'old_snet', root_dir
     )
-    img_rows = fp.lmap(
-        lambda uuid, size_info: (uuid, *size_info),
-        img_uuids, img_sizeseq)
+    
+    # others
+    img_rows = common.full_sized_image_rows(img_uuids, img_abspaths)
     
     output_rows = F.lconcat(
         zip(rbk_uuids, F.repeat('mask')),
@@ -103,47 +105,36 @@ def add_data(root, connection) -> Any:
         lambda img_info, out_info: img_info[:5] + out_info,
         img_rows * 2, output_rows)#uuid,y,x,h,w          
     
-    all_uuids = img_uuids + rbk_uuids + wk_uuids
-    abspaths = img_abspaths + rbk_abspaths + wk_abspaths
-    relpaths = fp.lmap(relpath, abspaths)
-    
-    # Has db 'mask' type?
-    annotation_type = S.annotation_type._
-    has_mask_type = db.contains(
-        annotation_type, 'name', 'mask', connection)
-    
     # Run queries.
-    uuid, source, relpath, abspath = (
-        S.file.uuid, S.file.source, S.file.relpath, S.file.abspath)
     query = db.multi_query(
-        S.file_source._.insert(
-            'old_snet', str(root_dir), etc.host_ip()),
-        Query.into(S.file._)
-            .columns(uuid, source, relpath, abspath)
-            .insert(*zip(
-                all_uuids, F.repeat('old_snet'),
-                relpaths, abspaths
-            )),
+        file_query,
         # Add images
         S.image._.insert(*img_rows),
-        # Add masks
-        S.mask_scheme._.insert(
-            ('rbk', 'red, blue, black 3 class dataset'),
-            ( 'wk', 'white, black 2 class dataset')),
-        S.mask_scheme_content._.insert(
+        # Add new mask scheme(already exists, then is skipped)
+        Q.insert_new_mask_scheme(
+            'rbk',
+            'red, blue, black 3 class dataset',
+            connection,
             ('rbk', '#FF0000', 'easy text'), 
             ('rbk', '#0000FF', 'hard text'), 
             ('rbk', '#000000', 'background'),
+        ),
+        Q.insert_new_mask_scheme(
+            'wk', 'white, black 2 class dataset', connection,
             ( 'wk', '#FFFFFF', 'text'), 
-            ( 'wk', '#000000', 'background')), 
+            ( 'wk', '#000000', 'background')
+        ), 
+        # Add masks
         S.mask._.insert(*F.concat(
             zip(rbk_uuids, F.repeat('rbk')),
             zip(wk_uuids, F.repeat('wk'))
         )),
         # Add annotation relation
-        annotation_type.insert(
-            ('mask', 'image that has same height,width of input')
-        ) if not has_mask_type else '',
+        Q.insert_new_annotation_type(
+            'mask',
+            'image that has same height, width of input',
+            connection
+        ),
         S.annotation._.insert(*annotation_rows)
     )
     db.run(query, connection)

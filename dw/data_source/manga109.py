@@ -23,11 +23,14 @@ import os
 from pathlib import Path
 
 import funcy as F
+from pypika import Query
 
-from dw.utils import file_utils as fu
-from dw.utils import fp
 from dw import db
+from dw import query as Q
+from dw.utils import file_utils as fu
+from dw.utils import fp, etc
 from dw.schema import schema as S, Any
+from dw.data_source import common
 
 
 def is_valid(root):
@@ -58,46 +61,61 @@ def is_valid(root):
 
 def add_data(root, connection) -> Any:
     ''' Add Manga109 data to DB(connection) '''
-    # TODO: Rewrite this
     if not is_valid(root):
         return 'Invalid Manga109 dataset'
 
-    return None
-    # Get images (path, title, no).
+    # Insert file information
+    img_abspaths = fu.descendants(Path(root, 'images'))
+    xml_abspaths = fu.descendants(Path(root, 'manga109-annotations'))
+    all_abspaths = img_abspaths + xml_abspaths
+    
     relpath = F.partial(os.path.relpath, start=root)
-    sorted_children = fp.pipe(fu.children, fu.human_sorted)
-    title_dirpaths = sorted_children(Path(root, 'images'))
-    stem = lambda p: Path(p).stem
-    imgpaths = fp.go(
-        title_dirpaths,
-        fp.mapcat(sorted_children),
-        fp.lmap(relpath)
-    )
-    multiplied_titles, nos = fp.go(
-        imgpaths,
-        fp.map(stem),
-        fp.map(lambda s: s.rsplit('_', 1)),
-        fp.map(fp.tup(lambda title, no: [title, int(no)])),
-        fp.unzip
+    img_relpaths = fp.lmap(relpath, img_abspaths)
+    xml_relpaths = fp.lmap(relpath, xml_abspaths)
+    all_relpaths = img_relpaths + xml_relpaths
+    
+    img_uuids = etc.uuid4strs(len(img_abspaths))
+    xml_uuids = etc.uuid4strs(len(xml_abspaths))
+    all_uuids = img_uuids + xml_uuids
+    
+    file_query = Q.insert_files(
+        all_uuids, all_relpaths, all_abspaths,
+        'manga109', root
     )
 
-    # Get metadata xml files
-    titles = fp.lmap(stem, title_dirpaths)
-    xmlseq = fp.go(
-        Path(root, 'manga109-annotations'),
-        sorted_children,
-        fp.map(lambda p: Path(p).read_text())
-    )
+    # Insert image information
+    img_rows = common.full_sized_image_rows(
+        img_uuids, img_abspaths)
     
-    # Run queries.
-    #tab_name = ''
+    # Insert xml annotation type
+    annotation_name = 'manga109xml'
+    new_annotation_type_query = Q.insert_new_annotation_type(
+        annotation_name,
+        'xml file for a manga title',
+        connection)
+    
+    # Build annotation_rows: [img_pk, xml_uuid]
+    title2xml_uuid = F.zipdict(
+        F.map(lambda p: Path(p).stem, xml_abspaths),
+        xml_uuids)
+    def title(img_path):
+        return Path(img_path).parents[0].parts[-1] #m109 specific
+    img_primary_keys = F.lmap(
+        fp.tup(lambda inp, y,x, h,w, *_: (inp, y,x, h,w)),
+        img_rows)
+    img_xml_uuids = F.lmap(
+        fp.pipe(title, title2xml_uuid), img_abspaths)
+    annotation_rows = F.lmap(
+        lambda img_pk, xml_uuid:
+        (*img_pk, xml_uuid, annotation_name),
+        img_primary_keys, img_xml_uuids)
+        
+    # Run query
     query = db.multi_query(
-        S.manga109_raw._.insert(
-            *zip(multiplied_titles, nos, imgpaths)),
-        S.manga109_xml._.insert(
-            *zip(titles, xmlseq)),
-        S.raw_table_root._.insert(
-            'manga109_raw', root)
+        file_query, 
+        S.image._.insert(*img_rows),
+        new_annotation_type_query,
+        S.annotation._.insert(*annotation_rows)
     )
     db.run(query, connection)
     
