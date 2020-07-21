@@ -16,3 +16,8 @@ def test_tmp(conn):
     orm.init(types.connection(conn))
     Q.CREATE_TABLES()
     Q.DROP_ALL()
+    
+def test_inint_conn_str(conn):
+    orm.init(conn)
+    Q.CREATE_TABLES()
+    Q.DROP_ALL()
