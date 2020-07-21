@@ -3,9 +3,11 @@ from dw.db import orm
 
 #---------------------------------------------------------------
 # Commands without session
-def create_tables():
+def CREATE_TABLES():
     assert orm.engine is not None, 'orm.init first.'
     Base.metadata.create_all(orm.engine)
     
 # ** DANGER! **
-#def DROP_ALL(sess): sess.
+def DROP_ALL():
+    assert orm.engine is not None, 'orm.init first.'
+    Base.metadata.drop_all(orm.engine)
