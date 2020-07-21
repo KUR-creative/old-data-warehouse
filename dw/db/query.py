@@ -10,4 +10,5 @@ def CREATE_TABLES():
 # ** DANGER! **
 def DROP_ALL():
     assert orm.engine is not None, 'orm.init first.'
+    orm.sess_factory.close_all() # need to close all
     Base.metadata.drop_all(orm.engine)
